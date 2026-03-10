@@ -5,6 +5,7 @@ class ResumeModel {
   String jobTitle;
   String summary;
   String skills;
+  String selectedTemplate; // ⬅️ Naya addition
 
   ResumeModel({
     this.fullName = '',
@@ -13,5 +14,6 @@ class ResumeModel {
     this.jobTitle = '',
     this.summary = '',
     this.skills = '',
+    this.selectedTemplate = 'Classic', // ⬅️ Default design 'Classic' hoga
   });
 }
