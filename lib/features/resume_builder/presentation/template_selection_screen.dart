@@ -13,8 +13,25 @@ class TemplateSelectionScreen extends StatelessWidget {
     {'name': 'Minimalist', 'tag': 'FREE', 'type': 'centered'},
   ];
 
+  // ⬅️ HELPER: Bhare hue text blocks (dummy data) bananay ke liye
+  Widget _buildFakeLines(int count, {Color? color, double width = double.infinity, double height = 2}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(count, (index) {
+        // Aakhri line thori choti hoti hai taake real text lagay
+        double lineWidth = (index == count - 1) ? width * 0.6 : width;
+        return Container(
+          height: height,
+          width: lineWidth,
+          color: color ?? Colors.grey.shade300,
+          margin: const EdgeInsets.only(bottom: 3),
+        );
+      }),
+    );
+  }
+
   Widget _buildMiniLayout(String type) {
-    // 1. ULTRA PREMIUM (Executive) - 3 Color Diagonal Cut
+    // 1. ULTRA PREMIUM (Executive) - 3 Color Cut with Dense Data
     if (type == 'ultra_premium') {
       return Stack(
         children: [
@@ -23,63 +40,114 @@ class TemplateSelectionScreen extends StatelessWidget {
             child: Transform.rotate(
               angle: -0.15,
               child: Container(
-                height: 60,
+                height: 55,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(colors: [Color(0xFF4158D0), Color(0xFFC850C0), Color(0xFFFFCC70)]),
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
                 ),
               ),
             ),
           ),
-          Positioned(top: 15, left: 10, child: Container(height: 6, width: 40, color: Colors.white)),
-          Positioned(top: 25, left: 10, child: Container(height: 3, width: 25, color: Colors.white70)),
+          Positioned(top: 10, left: 10, child: Container(height: 5, width: 35, color: Colors.white)),
+          Positioned(top: 18, left: 10, child: Container(height: 2, width: 25, color: Colors.white70)),
+          Positioned(top: 24, left: 10, child: Container(height: 2, width: 45, color: Colors.white54)),
           Positioned(
-            top: 12, right: 10,
-            child: CircleAvatar(radius: 12, backgroundColor: Colors.white, child: CircleAvatar(radius: 10, backgroundColor: Colors.grey.shade300)),
+            top: 10, right: 10,
+            child: CircleAvatar(radius: 12, backgroundColor: Colors.white, child: CircleAvatar(radius: 11, backgroundColor: Colors.grey.shade300)),
           ),
-          Positioned(top: 60, left: 10, child: Container(height: 4, width: 30, color: const Color(0xFF4158D0))),
-          Positioned(top: 68, left: 10, child: Container(height: 3, width: 45, color: Colors.grey.shade300)),
-          Positioned(top: 74, left: 10, child: Container(height: 3, width: 40, color: Colors.grey.shade300)),
 
-          Positioned(top: 60, right: 10, child: Container(height: 4, width: 20, color: const Color(0xFF4158D0))),
-          Positioned(top: 68, right: 10, child: Container(height: 3, width: 30, color: Colors.grey.shade300)),
+          // Body Columns
+          Positioned(
+              top: 55, left: 8, right: 8, bottom: 8,
+              child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                        flex: 6,
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(height: 3, width: 20, color: const Color(0xFF4158D0)),
+                              const SizedBox(height: 4),
+                              _buildFakeLines(3),
+                              const SizedBox(height: 8),
+                              Container(height: 3, width: 25, color: const Color(0xFF4158D0)),
+                              const SizedBox(height: 4),
+                              _buildFakeLines(4),
+                              const SizedBox(height: 8),
+                              Container(height: 3, width: 20, color: const Color(0xFF4158D0)),
+                              const SizedBox(height: 4),
+                              _buildFakeLines(2),
+                            ]
+                        )
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        flex: 4,
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(height: 3, width: 20, color: const Color(0xFF4158D0)),
+                              const SizedBox(height: 4),
+                              _buildFakeLines(3),
+                              const SizedBox(height: 8),
+                              Container(height: 3, width: 20, color: const Color(0xFF4158D0)),
+                              const SizedBox(height: 4),
+                              _buildFakeLines(4),
+                            ]
+                        )
+                    )
+                  ]
+              )
+          )
         ],
       );
     }
     // 2. PROFESSIONAL (Pro Canva) - Dark Left Sidebar
     else if (type == 'pro_canva') {
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             width: 45, color: const Color(0xFF1A237E),
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(radius: 10, backgroundColor: Colors.white, child: CircleAvatar(radius: 9, backgroundColor: Colors.grey.shade300)),
+                const Center(child: CircleAvatar(radius: 10, backgroundColor: Colors.white, child: CircleAvatar(radius: 9, backgroundColor: Colors.grey))),
                 const SizedBox(height: 10),
-                Container(height: 3, width: 25, color: Colors.white),
+                Container(height: 3, width: 20, color: Colors.white),
                 const SizedBox(height: 4),
-                Container(height: 2, width: 20, color: Colors.white54),
+                _buildFakeLines(3, color: Colors.white54),
+                const SizedBox(height: 10),
+                Container(height: 3, width: 20, color: Colors.white),
                 const SizedBox(height: 4),
-                Container(height: 2, width: 20, color: Colors.white54),
+                _buildFakeLines(5, color: Colors.white54),
               ],
             ),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 6, width: 50, color: const Color(0xFF1A237E)),
+                  Container(height: 6, width: 45, color: const Color(0xFF1A237E)),
+                  const SizedBox(height: 3),
+                  Container(height: 2, width: 30, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity, padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: const Color(0xFFE8EAF6), borderRadius: BorderRadius.circular(2)),
+                    child: _buildFakeLines(2, color: Colors.blueGrey.shade300),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(height: 3, width: 35, color: const Color(0xFF1A237E)),
                   const SizedBox(height: 4),
-                  Container(height: 3, width: 30, color: Colors.grey.shade400),
-                  const SizedBox(height: 10),
-                  Container(height: 15, width: double.infinity, color: const Color(0xFFE8EAF6)),
-                  const SizedBox(height: 10),
-                  Container(height: 4, width: 40, color: const Color(0xFF1A237E)),
+                  _buildFakeLines(4),
+                  const SizedBox(height: 8),
+                  Container(height: 3, width: 35, color: const Color(0xFF1A237E)),
                   const SizedBox(height: 4),
-                  Container(height: 3, width: double.infinity, color: Colors.grey.shade300),
+                  _buildFakeLines(3),
                 ],
               ),
             ),
@@ -87,7 +155,7 @@ class TemplateSelectionScreen extends StatelessWidget {
         ],
       );
     }
-    // 3. CREATIVE (Creative Canva) - Dark Header, Orange Accent
+    // 3. CREATIVE (Creative Canva) - Dark Header
     else if (type == 'creative_canva') {
       return Column(
         children: [
@@ -103,15 +171,16 @@ class TemplateSelectionScreen extends StatelessWidget {
                   children: [
                     Container(height: 5, width: 40, color: Colors.white),
                     const SizedBox(height: 4),
-                    Container(height: 3, width: 25, color: const Color(0xFFFF6D00)),
+                    Container(height: 2, width: 25, color: const Color(0xFFFF6D00)),
                   ],
                 ),
-                CircleAvatar(radius: 10, backgroundColor: const Color(0xFFFF6D00), child: CircleAvatar(radius: 9, backgroundColor: Colors.grey.shade300)),
+                const CircleAvatar(radius: 12, backgroundColor: Color(0xFFFF6D00), child: CircleAvatar(radius: 11, backgroundColor: Colors.grey)),
               ],
             ),
           ),
           Expanded(
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
                   width: 35, color: Colors.grey.shade100,
@@ -121,9 +190,13 @@ class TemplateSelectionScreen extends StatelessWidget {
                     children: [
                       Container(height: 3, width: 20, color: const Color(0xFF212121)),
                       const SizedBox(height: 2),
-                      Container(height: 2, width: 15, color: const Color(0xFFFF6D00)),
-                      const SizedBox(height: 8),
-                      Container(height: 2, width: 20, color: Colors.grey.shade400),
+                      Container(height: 2, width: 10, color: const Color(0xFFFF6D00)),
+                      const SizedBox(height: 6),
+                      _buildFakeLines(4, color: Colors.grey.shade500),
+                      const SizedBox(height: 10),
+                      Container(height: 3, width: 20, color: const Color(0xFF212121)),
+                      const SizedBox(height: 6),
+                      _buildFakeLines(5, color: Colors.grey.shade500),
                     ],
                   ),
                 ),
@@ -135,11 +208,15 @@ class TemplateSelectionScreen extends StatelessWidget {
                       children: [
                         Container(height: 4, width: 30, color: const Color(0xFF212121)),
                         const SizedBox(height: 4),
-                        Container(height: 3, width: double.infinity, color: Colors.grey.shade300),
+                        _buildFakeLines(3),
                         const SizedBox(height: 8),
-                        Container(height: 4, width: 40, color: const Color(0xFF212121)),
+                        Container(height: 4, width: 35, color: const Color(0xFF212121)),
                         const SizedBox(height: 4),
-                        Container(height: 3, width: double.infinity, color: Colors.grey.shade300),
+                        _buildFakeLines(4),
+                        const SizedBox(height: 8),
+                        Container(height: 4, width: 35, color: const Color(0xFF212121)),
+                        const SizedBox(height: 4),
+                        _buildFakeLines(3),
                       ],
                     ),
                   ),
@@ -150,12 +227,12 @@ class TemplateSelectionScreen extends StatelessWidget {
         ],
       );
     }
-    // 4. MODERN (Header Style - Real Look)
+    // 4. MODERN
     else if (type == 'header') {
       return Column(
           children: [
             Container(
-              height: 40, color: Colors.blueGrey.shade800,
+              height: 35, color: Colors.blueGrey.shade800,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,7 +242,7 @@ class TemplateSelectionScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(height: 5, width: 40, color: Colors.white),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Container(height: 2, width: 25, color: Colors.blueGrey.shade200),
                     ],
                   ),
@@ -174,28 +251,29 @@ class TemplateSelectionScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 8, width: double.infinity, color: Colors.grey.shade200),
-                    const SizedBox(height: 10),
+                    _buildFakeLines(2),
+                    const SizedBox(height: 8),
                     Container(height: 4, width: 30, color: Colors.blueGrey.shade800),
                     const SizedBox(height: 4),
-                    Container(height: 3, width: double.infinity, color: Colors.grey.shade300),
-                    const SizedBox(height: 10),
+                    _buildFakeLines(4),
+                    const SizedBox(height: 8),
                     Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Container(height: 3, width: 25, color: Colors.blueGrey.shade800),
                             const SizedBox(height: 4),
-                            Container(height: 2, width: double.infinity, color: Colors.grey.shade300),
+                            _buildFakeLines(4),
                           ])),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Container(height: 3, width: 25, color: Colors.blueGrey.shade800),
                             const SizedBox(height: 4),
-                            Container(height: 2, width: double.infinity, color: Colors.grey.shade300),
+                            _buildFakeLines(4),
                           ])),
                         ]
                     )
@@ -205,31 +283,33 @@ class TemplateSelectionScreen extends StatelessWidget {
           ]
       );
     }
-    // 5. MINIMALIST (Centered Style - Real Look)
+    // 5. MINIMALIST
     else if (type == 'centered') {
       return Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(radius: 14, backgroundColor: Colors.grey.shade300),
+              const CircleAvatar(radius: 14, backgroundColor: Colors.grey),
               const SizedBox(height: 8),
-              Container(height: 5, width: 50, color: Colors.black87),
+              Container(height: 5, width: 45, color: Colors.black87),
               const SizedBox(height: 4),
-              Container(height: 2, width: 30, color: Colors.grey.shade500),
-              const SizedBox(height: 12),
-              Container(height: 2, width: 80, color: Colors.grey.shade300),
-              const SizedBox(height: 12),
-              Container(height: 4, width: 40, color: Colors.black87),
+              Container(height: 2, width: 25, color: Colors.grey.shade600),
+              const SizedBox(height: 10),
+              _buildFakeLines(3, height: 1.5),
+              const SizedBox(height: 10),
+              Container(height: 3, width: 35, color: Colors.black87),
               const SizedBox(height: 6),
-              Container(height: 2, width: 70, color: Colors.grey.shade300),
-              const SizedBox(height: 4),
-              Container(height: 2, width: 60, color: Colors.grey.shade300),
+              _buildFakeLines(4),
+              const SizedBox(height: 8),
+              Container(height: 3, width: 35, color: Colors.black87),
+              const SizedBox(height: 6),
+              _buildFakeLines(3),
             ]
         ),
       );
     }
-    // 6. CLASSIC (Simple Traditional Style - Real Look)
+    // 6. CLASSIC
     else {
       return Padding(
           padding: const EdgeInsets.all(12.0),
@@ -242,26 +322,28 @@ class TemplateSelectionScreen extends StatelessWidget {
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(height: 6, width: 60, color: Colors.black87),
+                            Container(height: 6, width: 50, color: Colors.black87),
                             const SizedBox(height: 4),
-                            Container(height: 3, width: 40, color: Colors.grey.shade600),
+                            Container(height: 3, width: 30, color: Colors.grey.shade600),
                           ]
                       ),
-                      CircleAvatar(radius: 12, backgroundColor: Colors.grey.shade300),
+                      const CircleAvatar(radius: 12, backgroundColor: Colors.grey),
                     ]
                 ),
+                const SizedBox(height: 6),
+                Container(height: 1, width: double.infinity, color: Colors.black54),
                 const SizedBox(height: 8),
-                Container(height: 1, width: double.infinity, color: Colors.black),
+                Container(height: 4, width: 30, color: Colors.black87),
+                const SizedBox(height: 4),
+                _buildFakeLines(4),
                 const SizedBox(height: 10),
-                Container(height: 4, width: 35, color: Colors.black87),
+                Container(height: 4, width: 30, color: Colors.black87),
                 const SizedBox(height: 4),
-                Container(height: 2, width: double.infinity, color: Colors.grey.shade300),
-                const SizedBox(height: 4),
-                Container(height: 2, width: 90, color: Colors.grey.shade300),
+                _buildFakeLines(4),
                 const SizedBox(height: 10),
-                Container(height: 4, width: 45, color: Colors.black87),
+                Container(height: 4, width: 30, color: Colors.black87),
                 const SizedBox(height: 4),
-                Container(height: 2, width: double.infinity, color: Colors.grey.shade300),
+                _buildFakeLines(3),
               ]
           )
       );
@@ -333,7 +415,7 @@ class TemplateSelectionScreen extends StatelessWidget {
                       children: [
                         Column(
                           children: [
-                            // ⬅️ Mini CV Page
+                            // ⬅️ Mini CV Page (Now Data-Rich)
                             Expanded(
                               child: Container(
                                 width: double.infinity,

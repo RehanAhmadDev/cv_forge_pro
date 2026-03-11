@@ -27,11 +27,15 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     super.initState();
     _resumeData.selectedTemplate = widget.selectedTemplate;
 
+    // Default 1 khali item add kar dete hain taake form form lagay
+    if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
+    if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
+
     _tabController = TabController(length: 2, vsync: this);
 
     _tabController.addListener(() {
       if (_tabController.index == 1) {
-        FocusScope.of(context).unfocus(); // Keyboard hide karne ke liye
+        FocusScope.of(context).unfocus();
         _updatePreview();
       }
     });
@@ -86,7 +90,20 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     }
   }
 
-  // ⬅️ Naya Custom Premium TextField
+  // --- HELPER UI COMPONENTS ---
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0, top: 10.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueGrey.shade800, size: 24),
+          const SizedBox(width: 10),
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.blueGrey.shade900)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPremiumTextField({required String label, required IconData icon, required Function(String) onChanged, int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -109,24 +126,148 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     );
   }
 
-  // ⬅️ Section Header UI
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildDynamicTextField({required String label, required Function(String) onChanged, int maxLines = 1}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0, top: 10.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.blueGrey.shade800, size: 24),
-          const SizedBox(width: 10),
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.blueGrey.shade900)),
-        ],
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TextFormField(
+        maxLines: maxLines,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300, width: 1)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200, width: 1)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.blueGrey.shade400, width: 1)),
+        ),
       ),
+    );
+  }
+
+  // --- DYNAMIC SECTIONS ---
+  Widget _buildExperienceSection() {
+    return Column(
+      children: [
+        ..._resumeData.experienceList.asMap().entries.map((entry) {
+          int index = entry.key;
+          ExperienceItem exp = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 15),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Job ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                      onPressed: () => setState(() => _resumeData.experienceList.removeAt(index)),
+                    )
+                  ],
+                ),
+                _buildDynamicTextField(label: 'Company Name', onChanged: (v) => exp.company = v),
+                _buildDynamicTextField(label: 'Job Role', onChanged: (v) => exp.role = v),
+                _buildDynamicTextField(label: 'Duration (e.g. Jan 2023 - Present)', onChanged: (v) => exp.duration = v),
+                _buildDynamicTextField(label: 'Description / Responsibilities', maxLines: 2, onChanged: (v) => exp.description = v),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() => _resumeData.experienceList.add(ExperienceItem())),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('Add Another Job'),
+        )
+      ],
+    );
+  }
+
+  Widget _buildEducationSection() {
+    return Column(
+      children: [
+        ..._resumeData.educationList.asMap().entries.map((entry) {
+          int index = entry.key;
+          EducationItem edu = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 15),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Degree ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                      onPressed: () => setState(() => _resumeData.educationList.removeAt(index)),
+                    )
+                  ],
+                ),
+                _buildDynamicTextField(label: 'Institution / University', onChanged: (v) => edu.institution = v),
+                _buildDynamicTextField(label: 'Degree (e.g. BSCS)', onChanged: (v) => edu.degree = v),
+                _buildDynamicTextField(label: 'Year of Graduation', onChanged: (v) => edu.year = v),
+                _buildDynamicTextField(label: 'Grade / CGPA', onChanged: (v) => edu.grade = v),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() => _resumeData.educationList.add(EducationItem())),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('Add Another Degree'),
+        )
+      ],
+    );
+  }
+
+  Widget _buildProjectSection() {
+    return Column(
+      children: [
+        ..._resumeData.projectList.asMap().entries.map((entry) {
+          int index = entry.key;
+          ProjectItem proj = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 15),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Project ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                      onPressed: () => setState(() => _resumeData.projectList.removeAt(index)),
+                    )
+                  ],
+                ),
+                _buildDynamicTextField(label: 'Project Title', onChanged: (v) => proj.title = v),
+                _buildDynamicTextField(label: 'Description', maxLines: 2, onChanged: (v) => proj.description = v),
+                _buildDynamicTextField(label: 'Project Link (Optional)', onChanged: (v) => proj.link = v),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() => _resumeData.projectList.add(ProjectItem())),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('Add A Project'),
+        )
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Light premium background
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text('${widget.selectedTemplate} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
         backgroundColor: Colors.white,
@@ -156,7 +297,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Profile Picture Section
+                // Profile Picture
                 Center(
                   child: Stack(
                     alignment: Alignment.bottomRight,
@@ -200,28 +341,67 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
                       _buildPremiumTextField(label: 'Job Title', icon: Icons.work_outline, onChanged: (v) => _resumeData.jobTitle = v),
                       _buildPremiumTextField(label: 'Email Address', icon: Icons.email_outlined, onChanged: (v) => _resumeData.email = v),
                       _buildPremiumTextField(label: 'Phone Number', icon: Icons.phone_outlined, onChanged: (v) => _resumeData.phone = v),
+                      _buildPremiumTextField(label: 'Address / Location', icon: Icons.location_on_outlined, onChanged: (v) => _resumeData.address = v),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // Card 2: Professional Details
+                // Card 2: Professional Details (Skills, Lang, Summary)
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
                   child: Column(
                     children: [
-                      _buildSectionHeader('Professional Info', Icons.business_center),
-                      _buildPremiumTextField(label: 'Work Experience', icon: Icons.history, maxLines: 3, onChanged: (v) => _resumeData.experience = v),
-                      _buildPremiumTextField(label: 'Education', icon: Icons.school_outlined, maxLines: 2, onChanged: (v) => _resumeData.education = v),
+                      _buildSectionHeader('Professional Info', Icons.psychology),
                       _buildPremiumTextField(label: 'Skills (Comma separated)', icon: Icons.star_border, onChanged: (v) => _resumeData.skills = v),
+                      _buildPremiumTextField(label: 'Languages (Comma separated)', icon: Icons.language, onChanged: (v) => _resumeData.languages = v),
                       _buildPremiumTextField(label: 'Professional Summary', icon: Icons.edit_note, maxLines: 3, onChanged: (v) => _resumeData.summary = v),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // Card 3: Social Links
+                // Card 3: Experience (Dynamic)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
+                  child: Column(
+                    children: [
+                      _buildSectionHeader('Work Experience', Icons.business_center),
+                      _buildExperienceSection(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Card 4: Education (Dynamic)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
+                  child: Column(
+                    children: [
+                      _buildSectionHeader('Education', Icons.school_outlined),
+                      _buildEducationSection(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Card 5: Projects / Portfolio (Dynamic)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
+                  child: Column(
+                    children: [
+                      _buildSectionHeader('Projects / Portfolio', Icons.web_asset),
+                      _buildProjectSection(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Card 6: Social Links
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
@@ -243,7 +423,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
             children: [
               Expanded(
                   child: Container(
-                    color: Colors.grey.shade300, // PDF background dark kiya hai taake white page highlight ho
+                    color: Colors.grey.shade300,
                     child: PdfViewPinch(controller: _pdfController),
                   )
               ),
