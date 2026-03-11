@@ -16,10 +16,8 @@ class ResumeFormScreen extends StatefulWidget {
 
 class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerProviderStateMixin {
   final ResumeModel _resumeData = ResumeModel();
-
   late PdfControllerPinch _pdfController;
   late TabController _tabController;
-
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -27,7 +25,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     super.initState();
     _resumeData.selectedTemplate = widget.selectedTemplate;
 
-    // Default 1 khali item add kar dete hain taake form form lagay
     if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
     if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
 
@@ -80,188 +77,13 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
               content: Text('✅ Auto-Saved at:\n$savedPath', style: const TextStyle(color: Colors.white)),
               backgroundColor: Colors.green.shade600,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               duration: const Duration(seconds: 4)
           ),
         );
       }
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error: $e");
     }
-  }
-
-  // --- HELPER UI COMPONENTS ---
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0, top: 10.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.blueGrey.shade800, size: 24),
-          const SizedBox(width: 10),
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.blueGrey.shade900)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPremiumTextField({required String label, required IconData icon, required Function(String) onChanged, int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        maxLines: maxLines,
-        onChanged: onChanged,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.blueGrey.shade400),
-          prefixIcon: Icon(icon, color: Colors.blueGrey.shade300, size: 22),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200, width: 1)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blueGrey.shade600, width: 1.5)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDynamicTextField({required String label, required Function(String) onChanged, int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: TextFormField(
-        maxLines: maxLines,
-        onChanged: onChanged,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300, width: 1)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200, width: 1)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.blueGrey.shade400, width: 1)),
-        ),
-      ),
-    );
-  }
-
-  // --- DYNAMIC SECTIONS ---
-  Widget _buildExperienceSection() {
-    return Column(
-      children: [
-        ..._resumeData.experienceList.asMap().entries.map((entry) {
-          int index = entry.key;
-          ExperienceItem exp = entry.value;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 15),
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Job ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                      onPressed: () => setState(() => _resumeData.experienceList.removeAt(index)),
-                    )
-                  ],
-                ),
-                _buildDynamicTextField(label: 'Company Name', onChanged: (v) => exp.company = v),
-                _buildDynamicTextField(label: 'Job Role', onChanged: (v) => exp.role = v),
-                _buildDynamicTextField(label: 'Duration (e.g. Jan 2023 - Present)', onChanged: (v) => exp.duration = v),
-                _buildDynamicTextField(label: 'Description / Responsibilities', maxLines: 2, onChanged: (v) => exp.description = v),
-              ],
-            ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: () => setState(() => _resumeData.experienceList.add(ExperienceItem())),
-          icon: const Icon(Icons.add_circle_outline),
-          label: const Text('Add Another Job'),
-        )
-      ],
-    );
-  }
-
-  Widget _buildEducationSection() {
-    return Column(
-      children: [
-        ..._resumeData.educationList.asMap().entries.map((entry) {
-          int index = entry.key;
-          EducationItem edu = entry.value;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 15),
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Degree ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                      onPressed: () => setState(() => _resumeData.educationList.removeAt(index)),
-                    )
-                  ],
-                ),
-                _buildDynamicTextField(label: 'Institution / University', onChanged: (v) => edu.institution = v),
-                _buildDynamicTextField(label: 'Degree (e.g. BSCS)', onChanged: (v) => edu.degree = v),
-                _buildDynamicTextField(label: 'Year of Graduation', onChanged: (v) => edu.year = v),
-                _buildDynamicTextField(label: 'Grade / CGPA', onChanged: (v) => edu.grade = v),
-              ],
-            ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: () => setState(() => _resumeData.educationList.add(EducationItem())),
-          icon: const Icon(Icons.add_circle_outline),
-          label: const Text('Add Another Degree'),
-        )
-      ],
-    );
-  }
-
-  Widget _buildProjectSection() {
-    return Column(
-      children: [
-        ..._resumeData.projectList.asMap().entries.map((entry) {
-          int index = entry.key;
-          ProjectItem proj = entry.value;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 15),
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Project ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700)),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                      onPressed: () => setState(() => _resumeData.projectList.removeAt(index)),
-                    )
-                  ],
-                ),
-                _buildDynamicTextField(label: 'Project Title', onChanged: (v) => proj.title = v),
-                _buildDynamicTextField(label: 'Description', maxLines: 2, onChanged: (v) => proj.description = v),
-                _buildDynamicTextField(label: 'Project Link (Optional)', onChanged: (v) => proj.link = v),
-              ],
-            ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: () => setState(() => _resumeData.projectList.add(ProjectItem())),
-          icon: const Icon(Icons.add_circle_outline),
-          label: const Text('Add A Project'),
-        )
-      ],
-    );
   }
 
   @override
@@ -277,10 +99,8 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.blueGrey.shade900,
-          indicatorWeight: 3,
           labelColor: Colors.blueGrey.shade900,
           unselectedLabelColor: Colors.grey.shade500,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
             Tab(icon: Icon(Icons.edit_document), text: "Edit Details"),
             Tab(icon: Icon(Icons.remove_red_eye), text: "Live Preview")
@@ -289,164 +109,265 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
       ),
       body: TabBarView(
         controller: _tabController,
-        physics: const BouncingScrollPhysics(),
         children: [
-          // --- TAB 1: PREMIUM FORM ---
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Profile Picture
-                Center(
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
-                        ),
-                        child: CircleAvatar(
-                          radius: 55,
-                          backgroundColor: Colors.blueGrey.shade50,
-                          backgroundImage: _resumeData.imagePath != null ? FileImage(File(_resumeData.imagePath!)) : null,
-                          child: _resumeData.imagePath == null
-                              ? Icon(Icons.person_outline, size: 50, color: Colors.blueGrey.shade200)
-                              : null,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: Colors.blueGrey.shade800, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 25),
+          _EditDetailsTab(resumeData: _resumeData, pickImage: _pickImage),
+          _PreviewTab(pdfController: _pdfController, handleSave: _handleSave),
+        ],
+      ),
+    );
+  }
+}
 
-                // Card 1: Personal Info
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Personal Details', Icons.person),
-                      _buildPremiumTextField(label: 'Full Name', icon: Icons.badge, onChanged: (v) => _resumeData.fullName = v),
-                      _buildPremiumTextField(label: 'Job Title', icon: Icons.work_outline, onChanged: (v) => _resumeData.jobTitle = v),
-                      _buildPremiumTextField(label: 'Email Address', icon: Icons.email_outlined, onChanged: (v) => _resumeData.email = v),
-                      _buildPremiumTextField(label: 'Phone Number', icon: Icons.phone_outlined, onChanged: (v) => _resumeData.phone = v),
-                      _buildPremiumTextField(label: 'Address / Location', icon: Icons.location_on_outlined, onChanged: (v) => _resumeData.address = v),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+class _EditDetailsTab extends StatefulWidget {
+  final ResumeModel resumeData;
+  final VoidCallback pickImage;
+  const _EditDetailsTab({required this.resumeData, required this.pickImage});
 
-                // Card 2: Professional Details (Skills, Lang, Summary)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Professional Info', Icons.psychology),
-                      _buildPremiumTextField(label: 'Skills (Comma separated)', icon: Icons.star_border, onChanged: (v) => _resumeData.skills = v),
-                      _buildPremiumTextField(label: 'Languages (Comma separated)', icon: Icons.language, onChanged: (v) => _resumeData.languages = v),
-                      _buildPremiumTextField(label: 'Professional Summary', icon: Icons.edit_note, maxLines: 3, onChanged: (v) => _resumeData.summary = v),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+  @override
+  State<_EditDetailsTab> createState() => _EditDetailsTabState();
+}
 
-                // Card 3: Experience (Dynamic)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Work Experience', Icons.business_center),
-                      _buildExperienceSection(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
-                // Card 4: Education (Dynamic)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Education', Icons.school_outlined),
-                      _buildEducationSection(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildProfilePic(),
+          const SizedBox(height: 25),
+          _buildPersonalCard(),
+          const SizedBox(height: 20),
+          _buildProfessionalCard(),
+          const SizedBox(height: 20),
+          _buildExperienceCard(),
+          const SizedBox(height: 20),
+          _buildEducationCard(),
+          const SizedBox(height: 20),
+          _buildProjectsCard(),
+          const SizedBox(height: 20),
+          _buildSocialCard(),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
 
-                // Card 5: Projects / Portfolio (Dynamic)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Projects / Portfolio', Icons.web_asset),
-                      _buildProjectSection(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Card 6: Social Links
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.blueGrey.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)]),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Social Links', Icons.link),
-                      _buildPremiumTextField(label: 'LinkedIn Profile', icon: Icons.connect_without_contact, onChanged: (v) => _resumeData.linkedin = v),
-                      _buildPremiumTextField(label: 'GitHub Profile', icon: Icons.code, onChanged: (v) => _resumeData.github = v),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
-            ),
+  Widget _buildProfilePic() {
+    return Center(
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          CircleAvatar(
+            radius: 55,
+            backgroundColor: Colors.blueGrey.shade50,
+            backgroundImage: widget.resumeData.imagePath != null ? FileImage(File(widget.resumeData.imagePath!)) : null,
+            child: widget.resumeData.imagePath == null ? Icon(Icons.person_outline, size: 50, color: Colors.blueGrey.shade200) : null,
           ),
-
-          // --- TAB 2: LIVE PREVIEW ---
-          Column(
-            children: [
-              Expanded(
-                  child: Container(
-                    color: Colors.grey.shade300,
-                    child: PdfViewPinch(controller: _pdfController),
-                  )
-              ),
-              Container(
-                padding: const EdgeInsets.all(20.0),
-                decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey.shade900,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 55),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-                  ),
-                  icon: const Icon(Icons.download_rounded),
-                  label: const Text("Export as PDF", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  onPressed: _handleSave,
-                ),
-              ),
-            ],
+          GestureDetector(
+            onTap: widget.pickImage,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.blueGrey.shade800, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+              child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPersonalCard() {
+    return _buildCardWrapper(
+      title: 'Personal Details',
+      icon: Icons.person,
+      children: [
+        _buildField('Full Name', Icons.badge, (v) => widget.resumeData.fullName = v, initial: widget.resumeData.fullName),
+        _buildField('Job Title', Icons.work_outline, (v) => widget.resumeData.jobTitle = v, initial: widget.resumeData.jobTitle),
+        _buildField('Email', Icons.email_outlined, (v) => widget.resumeData.email = v, initial: widget.resumeData.email),
+        _buildField('Phone', Icons.phone_outlined, (v) => widget.resumeData.phone = v, initial: widget.resumeData.phone),
+        _buildField('Address', Icons.location_on_outlined, (v) => widget.resumeData.address = v, initial: widget.resumeData.address),
+      ],
+    );
+  }
+
+  Widget _buildProfessionalCard() {
+    return _buildCardWrapper(
+      title: 'Professional Info',
+      icon: Icons.psychology,
+      children: [
+        _buildField('Skills (Comma separated)', Icons.star_border, (v) => widget.resumeData.skills = v, initial: widget.resumeData.skills),
+        _buildField('Languages', Icons.language, (v) => widget.resumeData.languages = v, initial: widget.resumeData.languages),
+        _buildField('Summary', Icons.edit_note, (v) => widget.resumeData.summary = v, maxLines: 3, initial: widget.resumeData.summary),
+      ],
+    );
+  }
+
+  Widget _buildExperienceCard() {
+    return _buildCardWrapper(
+      title: 'Work Experience',
+      icon: Icons.business_center,
+      children: [
+        ...widget.resumeData.experienceList.asMap().entries.map((entry) {
+          int i = entry.key;
+          ExperienceItem exp = entry.value;
+          return _buildDynamicItem(
+            title: 'Job ${i + 1}',
+            onDelete: () => setState(() => widget.resumeData.experienceList.removeAt(i)),
+            fields: [
+              _buildSmallField('Company', (v) => exp.company = v, initial: exp.company),
+              _buildSmallField('Role', (v) => exp.role = v, initial: exp.role),
+              _buildSmallField('Duration', (v) => exp.duration = v, initial: exp.duration),
+              _buildSmallField('Description', (v) => exp.description = v, maxLines: 2, initial: exp.description),
+            ],
+          );
+        }),
+        TextButton.icon(onPressed: () => setState(() => widget.resumeData.experienceList.add(ExperienceItem())), icon: const Icon(Icons.add), label: const Text('Add Job')),
+      ],
+    );
+  }
+
+  Widget _buildEducationCard() {
+    return _buildCardWrapper(
+      title: 'Education',
+      icon: Icons.school_outlined,
+      children: [
+        ...widget.resumeData.educationList.asMap().entries.map((entry) {
+          int i = entry.key;
+          EducationItem edu = entry.value;
+          return _buildDynamicItem(
+            title: 'Degree ${i + 1}',
+            onDelete: () => setState(() => widget.resumeData.educationList.removeAt(i)),
+            fields: [
+              _buildSmallField('Institution', (v) => edu.institution = v, initial: edu.institution),
+              _buildSmallField('Degree', (v) => edu.degree = v, initial: edu.degree),
+              _buildSmallField('Year', (v) => edu.year = v, initial: edu.year),
+              _buildSmallField('Grade', (v) => edu.grade = v, initial: edu.grade),
+            ],
+          );
+        }),
+        TextButton.icon(onPressed: () => setState(() => widget.resumeData.educationList.add(EducationItem())), icon: const Icon(Icons.add), label: const Text('Add Education')),
+      ],
+    );
+  }
+
+  Widget _buildProjectsCard() {
+    return _buildCardWrapper(
+      title: 'Projects',
+      icon: Icons.web_asset,
+      children: [
+        ...widget.resumeData.projectList.asMap().entries.map((entry) {
+          int i = entry.key;
+          ProjectItem proj = entry.value;
+          return _buildDynamicItem(
+            title: 'Project ${i + 1}',
+            onDelete: () => setState(() => widget.resumeData.projectList.removeAt(i)),
+            fields: [
+              _buildSmallField('Title', (v) => proj.title = v, initial: proj.title),
+              _buildSmallField('Link', (v) => proj.link = v, initial: proj.link),
+              _buildSmallField('Description', (v) => proj.description = v, maxLines: 2, initial: proj.description),
+            ],
+          );
+        }),
+        TextButton.icon(onPressed: () => setState(() => widget.resumeData.projectList.add(ProjectItem())), icon: const Icon(Icons.add), label: const Text('Add Project')),
+      ],
+    );
+  }
+
+  Widget _buildSocialCard() {
+    return _buildCardWrapper(
+      title: 'Social Links',
+      icon: Icons.link,
+      children: [
+        _buildField('LinkedIn', Icons.connect_without_contact, (v) => widget.resumeData.linkedin = v, initial: widget.resumeData.linkedin),
+        _buildField('GitHub', Icons.code, (v) => widget.resumeData.github = v, initial: widget.resumeData.github),
+      ],
+    );
+  }
+
+  // --- REUSABLE WIDGETS (Corrected Types) ---
+
+  Widget _buildCardWrapper({required String title, required IconData icon, required List<Widget> children}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [Icon(icon, color: Colors.blueGrey), const SizedBox(width: 10), Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))]),
+          const Divider(height: 30),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField(String label, IconData icon, Function(String) onChanged, {int maxLines = 1, String initial = ''}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextFormField(
+        initialValue: initial,
+        maxLines: maxLines,
+        onChanged: onChanged,
+        decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+      ),
+    );
+  }
+
+  Widget _buildSmallField(String label, Function(String) onChanged, {int maxLines = 1, String initial = ''}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        initialValue: initial,
+        maxLines: maxLines,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(labelText: label, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+      ),
+    );
+  }
+
+  Widget _buildDynamicItem({required String title, required VoidCallback onDelete, required List<Widget> fields}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.bold)), IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete)]),
+          ...fields,
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewTab extends StatelessWidget {
+  final PdfControllerPinch pdfController;
+  final VoidCallback handleSave;
+  const _PreviewTab({required this.pdfController, required this.handleSave});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: Container(color: Colors.grey.shade300, child: PdfViewPinch(controller: pdfController))),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey.shade900, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 55)),
+            icon: const Icon(Icons.download),
+            label: const Text("Export as PDF"),
+            onPressed: handleSave,
+          ),
+        ),
+      ],
     );
   }
 }
