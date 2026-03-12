@@ -16,19 +16,19 @@ class PdfGenerator {
       profileImage = pw.MemoryImage(bytes);
     }
 
+    // ⬅️ ASAL JADOO YAHAN HAI: Sara Dummy Data khatam kar diya gaya hai.
+    // Ab jo user form mein likhega, sirf aur sirf wahi PDF mein aayega!
     final data = ResumeModel(
-      fullName: inputData.fullName.trim().isEmpty ? 'JONATHAN DOE' : inputData.fullName,
-      jobTitle: inputData.jobTitle.trim().isEmpty ? 'Flutter Developer' : inputData.jobTitle,
-      email: inputData.email.trim().isEmpty ? 'hello@jonathandoe.com' : inputData.email,
-      phone: inputData.phone.trim().isEmpty ? '+92 300 1234567' : inputData.phone,
-      address: inputData.address.trim().isEmpty ? 'Islamabad, Pakistan' : inputData.address,
-      linkedin: inputData.linkedin.trim().isEmpty ? 'linkedin.com/in/jonathandoe' : inputData.linkedin,
-      github: inputData.github.trim().isEmpty ? 'github.com/jonathandoe' : inputData.github,
-      summary: inputData.summary.trim().isEmpty
-          ? 'Passionate and results-driven developer with experience in creating scalable applications. Proven ability to deliver high-quality, visually stunning products.'
-          : inputData.summary,
-      skills: inputData.skills.trim().isEmpty ? 'Flutter, Dart, Firebase, REST APIs, Git' : inputData.skills,
-      languages: inputData.languages.trim().isEmpty ? 'English (Professional), Urdu (Native)' : inputData.languages,
+      fullName: inputData.fullName,
+      jobTitle: inputData.jobTitle,
+      email: inputData.email,
+      phone: inputData.phone,
+      address: inputData.address,
+      linkedin: inputData.linkedin,
+      github: inputData.github,
+      summary: inputData.summary,
+      skills: inputData.skills,
+      languages: inputData.languages,
       selectedTemplate: inputData.selectedTemplate,
       imagePath: inputData.imagePath,
       themeColor: inputData.themeColor,
@@ -38,21 +38,9 @@ class PdfGenerator {
       fontStyle: inputData.fontStyle,
     );
 
-    final validExp = inputData.experienceList.where((e) => e.company.trim().isNotEmpty || e.role.trim().isNotEmpty).toList();
-    data.experienceList = validExp.isEmpty ? [
-      ExperienceItem(role: 'Senior Developer', company: 'Tech Innovators', duration: 'Jan 2023 - Present', description: 'Leading the development team. Designed and deployed multiple high-performance applications.'),
-      ExperienceItem(role: 'Software Engineer', company: 'Creative Solutions', duration: 'Mar 2020 - Dec 2022', description: 'Developed robust cross-platform features and integrated complex APIs.')
-    ] : validExp;
-
-    final validEdu = inputData.educationList.where((e) => e.institution.trim().isNotEmpty || e.degree.trim().isNotEmpty).toList();
-    data.educationList = validEdu.isEmpty ? [
-      EducationItem(degree: 'Bachelor of Computer Science', institution: 'University of Engineering and Technology', year: '2016 - 2020', grade: '3.8 CGPA')
-    ] : validEdu;
-
-    final validProj = inputData.projectList.where((e) => e.title.trim().isNotEmpty).toList();
-    data.projectList = validProj.isEmpty ? [
-      ProjectItem(title: 'CV Forge Pro App', link: 'github.com/jonathandoe/cv_forge', description: 'A premium resume builder app featuring live PDF generation.')
-    ] : validProj;
+    data.experienceList = inputData.experienceList.where((e) => e.company.trim().isNotEmpty || e.role.trim().isNotEmpty).toList();
+    data.educationList = inputData.educationList.where((e) => e.institution.trim().isNotEmpty || e.degree.trim().isNotEmpty).toList();
+    data.projectList = inputData.projectList.where((e) => e.title.trim().isNotEmpty).toList();
 
     pdf.addPage(
       pw.Page(
@@ -94,14 +82,13 @@ class PdfGenerator {
   }
 
   // ==========================================
-  // 🌟 1. ULTRA PREMIUM (3-COLOR GRADIENT & CUTS)
+  // 🌟 1. ULTRA PREMIUM
   // ==========================================
   static pw.Widget _buildUltraPremium(ResumeModel data, pw.MemoryImage? image) {
     final color1 = PdfColor.fromHex(data.themeColor);
     final color2 = PdfColor.fromHex('#C850C0');
     final color3 = PdfColor.fromHex('#FFCC70');
     final darkText = PdfColor.fromHex('#1C1C1C');
-
     final double hSize = data.headingTextSize;
     final double bSize = data.bodyTextSize;
 
@@ -138,8 +125,10 @@ class PdfGenerator {
                                           children: [
                                             pw.SizedBox(height: 20),
                                             pw.Text(data.fullName.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 2, fontWeight: pw.FontWeight.bold, color: PdfColors.white, letterSpacing: 2)),
-                                            pw.SizedBox(height: 5),
-                                            pw.Text(data.jobTitle.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 0.9, color: PdfColors.white, letterSpacing: 3)),
+                                            if (data.jobTitle.isNotEmpty) ...[
+                                              pw.SizedBox(height: 5),
+                                              pw.Text(data.jobTitle.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 0.9, color: PdfColors.white, letterSpacing: 3)),
+                                            ],
                                             pw.SizedBox(height: 15),
                                             pw.Container(
                                                 padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -184,10 +173,12 @@ class PdfGenerator {
                                                   pw.SizedBox(height: 20),
                                                 ],
 
-                                                _buildGradientTitle('EXPERIENCE', color1, color2, hSize),
-                                                _buildDynamicExperience(data.experienceList, color1, bSize),
+                                                if (data.experienceList.isNotEmpty) ...[
+                                                  _buildGradientTitle('EXPERIENCE', color1, color2, hSize),
+                                                  _buildDynamicExperience(data.experienceList, color1, bSize),
+                                                ],
 
-                                                if (data.projectList.any((p) => p.title.isNotEmpty)) ...[
+                                                if (data.projectList.isNotEmpty) ...[
                                                   pw.SizedBox(height: 15),
                                                   _buildGradientTitle('PROJECTS', color1, color2, hSize),
                                                   _buildDynamicProjects(data.projectList, color1, bSize),
@@ -201,10 +192,11 @@ class PdfGenerator {
                                           child: pw.Column(
                                               crossAxisAlignment: pw.CrossAxisAlignment.start,
                                               children: [
-                                                _buildGradientTitle('EDUCATION', color1, color2, hSize),
-                                                _buildDynamicEducation(data.educationList, color1, bSize),
-
-                                                pw.SizedBox(height: 20),
+                                                if (data.educationList.isNotEmpty) ...[
+                                                  _buildGradientTitle('EDUCATION', color1, color2, hSize),
+                                                  _buildDynamicEducation(data.educationList, color1, bSize),
+                                                  pw.SizedBox(height: 20),
+                                                ],
 
                                                 if (data.skills.isNotEmpty) ...[
                                                   _buildGradientTitle('SKILLS', color1, color2, hSize),
@@ -244,14 +236,13 @@ class PdfGenerator {
   }
 
   // ==========================================
-  // 🌟 2. PROFESSIONAL (PRO CANVA STYLE)
+  // 🌟 2. PROFESSIONAL
   // ==========================================
   static pw.Widget _buildProCanvaDesign(ResumeModel data, pw.MemoryImage? image) {
     final primaryColor = PdfColor.fromHex(data.themeColor);
     final accentColor = PdfColor.fromHex('#E8EAF6');
     final textGreyColor = PdfColor.fromHex('#757575');
     final darkBlueGreyColor = PdfColor.fromHex('#37474F');
-
     final double hSize = data.headingTextSize;
     final double bSize = data.bodyTextSize;
 
@@ -338,8 +329,10 @@ class PdfGenerator {
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             pw.Text(data.fullName.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 2, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1.5)),
-                            pw.SizedBox(height: 5),
-                            pw.Text(data.jobTitle.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 0.9, color: textGreyColor, letterSpacing: 2)),
+                            if (data.jobTitle.isNotEmpty) ...[
+                              pw.SizedBox(height: 5),
+                              pw.Text(data.jobTitle.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 0.9, color: textGreyColor, letterSpacing: 2)),
+                            ],
                             pw.SizedBox(height: 25),
 
                             if (data.summary.isNotEmpty) ...[
@@ -356,17 +349,20 @@ class PdfGenerator {
                               pw.SizedBox(height: 25),
                             ],
 
-                            pw.Text('EXPERIENCE', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1)),
-                            pw.SizedBox(height: 10),
-                            _buildDynamicExperience(data.experienceList, primaryColor, bSize),
+                            if (data.experienceList.isNotEmpty) ...[
+                              pw.Text('EXPERIENCE', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1)),
+                              pw.SizedBox(height: 10),
+                              _buildDynamicExperience(data.experienceList, primaryColor, bSize),
+                              pw.SizedBox(height: 15),
+                            ],
 
-                            pw.SizedBox(height: 15),
+                            if (data.educationList.isNotEmpty) ...[
+                              pw.Text('EDUCATION', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1)),
+                              pw.SizedBox(height: 10),
+                              _buildDynamicEducation(data.educationList, primaryColor, bSize),
+                            ],
 
-                            pw.Text('EDUCATION', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1)),
-                            pw.SizedBox(height: 10),
-                            _buildDynamicEducation(data.educationList, primaryColor, bSize),
-
-                            if (data.projectList.any((p) => p.title.isNotEmpty)) ...[
+                            if (data.projectList.isNotEmpty) ...[
                               pw.SizedBox(height: 15),
                               pw.Text('PROJECTS', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: primaryColor, letterSpacing: 1)),
                               pw.SizedBox(height: 10),
@@ -382,14 +378,13 @@ class PdfGenerator {
   }
 
   // ==========================================
-  // 🌟 3. CREATIVE (MODERN HEADER STYLE)
+  // 🌟 3. CREATIVE
   // ==========================================
   static pw.Widget _buildCreativeCanvaDesign(ResumeModel data, pw.MemoryImage? image) {
     final darkColor = PdfColor.fromHex(data.themeColor);
     final accentColor = PdfColor.fromHex('#FF6D00');
     final lightGreyColor = PdfColor.fromHex('#F5F5F5');
     final textGreyDark = PdfColor.fromHex('#424242');
-
     final double hSize = data.headingTextSize;
     final double bSize = data.bodyTextSize;
 
@@ -413,8 +408,10 @@ class PdfGenerator {
                                 mainAxisAlignment: pw.MainAxisAlignment.center,
                                 children: [
                                   pw.Text(data.fullName.toUpperCase(), style: pw.TextStyle(fontSize: hSize * 2, fontWeight: pw.FontWeight.bold, color: PdfColors.white, letterSpacing: 2)),
-                                  pw.SizedBox(height: 8),
-                                  pw.Text(data.jobTitle, style: pw.TextStyle(fontSize: hSize * 0.9, color: accentColor, letterSpacing: 1.5)),
+                                  if (data.jobTitle.isNotEmpty) ...[
+                                    pw.SizedBox(height: 8),
+                                    pw.Text(data.jobTitle, style: pw.TextStyle(fontSize: hSize * 0.9, color: accentColor, letterSpacing: 1.5)),
+                                  ]
                                 ]
                             )
                         ),
@@ -489,17 +486,20 @@ class PdfGenerator {
                                         pw.SizedBox(height: 25),
                                       ],
 
-                                      pw.Text('EXPERIENCE', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: darkColor)),
-                                      pw.SizedBox(height: 10),
-                                      _buildDynamicExperience(data.experienceList, accentColor, bSize),
+                                      if (data.experienceList.isNotEmpty) ...[
+                                        pw.Text('EXPERIENCE', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: darkColor)),
+                                        pw.SizedBox(height: 10),
+                                        _buildDynamicExperience(data.experienceList, accentColor, bSize),
+                                        pw.SizedBox(height: 15),
+                                      ],
 
-                                      pw.SizedBox(height: 15),
+                                      if (data.educationList.isNotEmpty) ...[
+                                        pw.Text('EDUCATION', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: darkColor)),
+                                        pw.SizedBox(height: 10),
+                                        _buildDynamicEducation(data.educationList, accentColor, bSize),
+                                      ],
 
-                                      pw.Text('EDUCATION', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: darkColor)),
-                                      pw.SizedBox(height: 10),
-                                      _buildDynamicEducation(data.educationList, accentColor, bSize),
-
-                                      if (data.projectList.any((p) => p.title.isNotEmpty)) ...[
+                                      if (data.projectList.isNotEmpty) ...[
                                         pw.SizedBox(height: 15),
                                         pw.Text('PROJECTS', style: pw.TextStyle(fontSize: hSize, fontWeight: pw.FontWeight.bold, color: darkColor)),
                                         pw.SizedBox(height: 10),
@@ -518,7 +518,7 @@ class PdfGenerator {
   }
 
   // ==========================================
-  // --- HELPER WIDGETS WITH DYNAMIC TEXT SIZES ---
+  // --- HELPER WIDGETS ---
   // ==========================================
 
   static pw.Widget _buildGradientTitle(String text, PdfColor c1, PdfColor c2, double hSize) {
@@ -558,14 +558,12 @@ class PdfGenerator {
   }
 
   static pw.Widget _buildDynamicExperience(List<ExperienceItem> items, PdfColor color, double bSize) {
-    final validItems = items.where((e) => e.company.isNotEmpty || e.role.isNotEmpty).toList();
-    if (validItems.isEmpty) return pw.SizedBox();
-
+    if (items.isEmpty) return pw.SizedBox();
     final textGrey = PdfColor.fromHex('#616161');
 
     return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: validItems.map((item) {
+        children: items.map((item) {
           return pw.Container(
               margin: const pw.EdgeInsets.only(bottom: 15),
               padding: const pw.EdgeInsets.only(left: 15),
@@ -573,9 +571,9 @@ class PdfGenerator {
               child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(item.role.isEmpty ? 'Role' : item.role, style: pw.TextStyle(fontSize: bSize + 2, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                    pw.Text(item.role, style: pw.TextStyle(fontSize: bSize + 2, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                     pw.SizedBox(height: 2),
-                    pw.Text('${item.company.isEmpty ? 'Company' : item.company}  |  ${item.duration}', style: pw.TextStyle(fontSize: bSize - 1, color: textGrey, fontStyle: pw.FontStyle.italic)),
+                    pw.Text('${item.company}  |  ${item.duration}', style: pw.TextStyle(fontSize: bSize - 1, color: textGrey, fontStyle: pw.FontStyle.italic)),
                     if (item.description.isNotEmpty) ...[
                       pw.SizedBox(height: 5),
                       pw.Text(item.description, style: pw.TextStyle(fontSize: bSize, lineSpacing: 1.5, color: const PdfColor(0, 0, 0, 0.87))),
@@ -588,14 +586,12 @@ class PdfGenerator {
   }
 
   static pw.Widget _buildDynamicEducation(List<EducationItem> items, PdfColor color, double bSize) {
-    final validItems = items.where((e) => e.institution.isNotEmpty || e.degree.isNotEmpty).toList();
-    if (validItems.isEmpty) return pw.SizedBox();
-
+    if (items.isEmpty) return pw.SizedBox();
     final textGrey = PdfColor.fromHex('#616161');
 
     return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: validItems.map((item) {
+        children: items.map((item) {
           return pw.Container(
               margin: const pw.EdgeInsets.only(bottom: 12),
               padding: const pw.EdgeInsets.only(left: 15),
@@ -603,7 +599,7 @@ class PdfGenerator {
               child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(item.degree.isEmpty ? 'Degree' : item.degree, style: pw.TextStyle(fontSize: bSize + 1, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                    pw.Text(item.degree, style: pw.TextStyle(fontSize: bSize + 1, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                     pw.SizedBox(height: 2),
                     pw.Text('${item.institution} ${item.year.isNotEmpty ? " | " + item.year : ""}', style: pw.TextStyle(fontSize: bSize - 1, color: textGrey)),
                     if (item.grade.isNotEmpty) ...[
@@ -618,14 +614,12 @@ class PdfGenerator {
   }
 
   static pw.Widget _buildDynamicProjects(List<ProjectItem> items, PdfColor color, double bSize) {
-    final validItems = items.where((e) => e.title.isNotEmpty).toList();
-    if (validItems.isEmpty) return pw.SizedBox();
-
+    if (items.isEmpty) return pw.SizedBox();
     final linkBlue = PdfColor.fromHex('#1565C0');
 
     return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: validItems.map((item) {
+        children: items.map((item) {
           return pw.Container(
               margin: const pw.EdgeInsets.only(bottom: 12),
               padding: const pw.EdgeInsets.only(left: 15),

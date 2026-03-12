@@ -22,7 +22,9 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
 
-  bool _isLoading = true; // ⬅️ NAYA: Loading state lagaya gaya hai
+  bool _isLoading = true;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -36,7 +38,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
       }
     });
 
-    _loadSavedData(); // ⬅️ Pehle data load hoga, phir PDF aur Form banenge
+    _loadSavedData();
   }
 
   @override
@@ -46,9 +48,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     super.dispose();
   }
 
-  // ==========================================
-  // 💾 DATABASE LOGIC (LOAD & SAVE)
-  // ==========================================
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -59,19 +58,17 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
         _resumeData = ResumeModel.fromJson(decodedData);
       }
 
-      // Hamesha wo template apply karein jo user ne bahar se select kiya hai
       _resumeData.selectedTemplate = widget.selectedTemplate;
 
       if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
       if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
 
-      // ⬅️ Data aane ke baad PDF controller chalana hai taake blank na ho
       _pdfController = PdfControllerPinch(
         document: PdfDocument.openData(PdfGenerator.generateResume(_resumeData)),
       );
 
       setState(() {
-        _isLoading = false; // ⬅️ Loading khatam, ab asli form draw hoga
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint("Data load error: $e");
@@ -88,7 +85,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
       debugPrint("Auto-save error: $e");
     }
   }
-  // ==========================================
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -107,6 +103,18 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
   }
 
   Future<void> _handleSave() async {
+    if (!_formKey.currentState!.validate()) {
+      _tabController.animateTo(0);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Please fill all required fields first!'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          )
+      );
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saving PDF...')));
     try {
       final pdfBytes = await PdfGenerator.generateResume(_resumeData);
@@ -130,7 +138,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    // ⬅️ NAYA: Agar data load ho raha hai, toh form mat dikhao
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF5F7FA),
@@ -167,6 +174,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
             resumeData: _resumeData,
             pickImage: _pickImage,
             onDataChanged: _autoSave,
+            formKey: _formKey,
           ),
           _DesignTab(
               resumeData: _resumeData,
@@ -175,7 +183,13 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
                 _autoSave();
               }
           ),
-          _PreviewTab(pdfController: _pdfController, handleSave: _handleSave),
+          // ⬅️ NAYA: Yahan hum ne resumeData aur tabController pass kar diye hain lock check ke liye
+          _PreviewTab(
+            pdfController: _pdfController,
+            handleSave: _handleSave,
+            resumeData: _resumeData,
+            tabController: _tabController,
+          ),
         ],
       ),
     );
@@ -258,7 +272,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
               widget.onUpdate();
             },
           ),
-          const Center(child: Text('Adjust spacing around the edges of your PDF', style: TextStyle(fontSize: 12, color: Colors.grey))),
 
           const SizedBox(height: 20),
           const Divider(),
@@ -303,7 +316,8 @@ class _EditDetailsTab extends StatefulWidget {
   final ResumeModel resumeData;
   final VoidCallback pickImage;
   final VoidCallback onDataChanged;
-  const _EditDetailsTab({required this.resumeData, required this.pickImage, required this.onDataChanged});
+  final GlobalKey<FormState> formKey;
+  const _EditDetailsTab({required this.resumeData, required this.pickImage, required this.onDataChanged, required this.formKey});
 
   @override
   State<_EditDetailsTab> createState() => _EditDetailsTabState();
@@ -316,26 +330,29 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildProfilePic(),
-          const SizedBox(height: 25),
-          _buildPersonalCard(),
-          const SizedBox(height: 20),
-          _buildProfessionalCard(),
-          const SizedBox(height: 20),
-          _buildExperienceCard(),
-          const SizedBox(height: 20),
-          _buildEducationCard(),
-          const SizedBox(height: 20),
-          _buildProjectsCard(),
-          const SizedBox(height: 20),
-          _buildSocialCard(),
-          const SizedBox(height: 30),
-        ],
+    return Form(
+      key: widget.formKey,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildProfilePic(),
+            const SizedBox(height: 25),
+            _buildPersonalCard(),
+            const SizedBox(height: 20),
+            _buildProfessionalCard(),
+            const SizedBox(height: 20),
+            _buildExperienceCard(),
+            const SizedBox(height: 20),
+            _buildEducationCard(),
+            const SizedBox(height: 20),
+            _buildProjectsCard(),
+            const SizedBox(height: 20),
+            _buildSocialCard(),
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
@@ -369,10 +386,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Personal Details',
       icon: Icons.person,
       children: [
-        _buildField('Full Name', Icons.badge, (v) => widget.resumeData.fullName = v, initial: widget.resumeData.fullName),
-        _buildField('Job Title', Icons.work_outline, (v) => widget.resumeData.jobTitle = v, initial: widget.resumeData.jobTitle),
-        _buildField('Email', Icons.email_outlined, (v) => widget.resumeData.email = v, initial: widget.resumeData.email),
-        _buildField('Phone', Icons.phone_outlined, (v) => widget.resumeData.phone = v, initial: widget.resumeData.phone),
+        _buildField('Full Name', Icons.badge, (v) => widget.resumeData.fullName = v, initial: widget.resumeData.fullName, isRequired: true),
+        _buildField('Job Title', Icons.work_outline, (v) => widget.resumeData.jobTitle = v, initial: widget.resumeData.jobTitle, isRequired: true),
+        _buildField('Email', Icons.email_outlined, (v) => widget.resumeData.email = v, initial: widget.resumeData.email, keyboardType: TextInputType.emailAddress, textCapitalization: TextCapitalization.none, isRequired: true),
+        _buildField('Phone', Icons.phone_outlined, (v) => widget.resumeData.phone = v, initial: widget.resumeData.phone, keyboardType: TextInputType.phone, isRequired: true),
         _buildField('Address', Icons.location_on_outlined, (v) => widget.resumeData.address = v, initial: widget.resumeData.address),
       ],
     );
@@ -383,9 +400,9 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Professional Info',
       icon: Icons.psychology,
       children: [
-        _buildField('Skills (Comma separated)', Icons.star_border, (v) => widget.resumeData.skills = v, initial: widget.resumeData.skills),
+        _buildField('Skills (Comma separated)', Icons.star_border, (v) => widget.resumeData.skills = v, initial: widget.resumeData.skills, isRequired: true),
         _buildField('Languages', Icons.language, (v) => widget.resumeData.languages = v, initial: widget.resumeData.languages),
-        _buildField('Summary', Icons.edit_note, (v) => widget.resumeData.summary = v, maxLines: 3, initial: widget.resumeData.summary),
+        _buildField('Summary', Icons.edit_note, (v) => widget.resumeData.summary = v, maxLines: 3, initial: widget.resumeData.summary, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
       ],
     );
   }
@@ -408,7 +425,7 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
               _buildSmallField('Company', (v) => exp.company = v, initial: exp.company),
               _buildSmallField('Role', (v) => exp.role = v, initial: exp.role),
               _buildSmallField('Duration', (v) => exp.duration = v, initial: exp.duration),
-              _buildSmallField('Description', (v) => exp.description = v, maxLines: 2, initial: exp.description),
+              _buildSmallField('Description', (v) => exp.description = v, maxLines: 2, initial: exp.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
             ],
           );
         }),
@@ -474,8 +491,8 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
             },
             fields: [
               _buildSmallField('Title', (v) => proj.title = v, initial: proj.title),
-              _buildSmallField('Link', (v) => proj.link = v, initial: proj.link),
-              _buildSmallField('Description', (v) => proj.description = v, maxLines: 2, initial: proj.description),
+              _buildSmallField('Link', (v) => proj.link = v, initial: proj.link, keyboardType: TextInputType.url, textCapitalization: TextCapitalization.none),
+              _buildSmallField('Description', (v) => proj.description = v, maxLines: 2, initial: proj.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
             ],
           );
         }),
@@ -496,13 +513,11 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Social Links',
       icon: Icons.link,
       children: [
-        _buildField('LinkedIn', Icons.connect_without_contact, (v) => widget.resumeData.linkedin = v, initial: widget.resumeData.linkedin),
-        _buildField('GitHub', Icons.code, (v) => widget.resumeData.github = v, initial: widget.resumeData.github),
+        _buildField('LinkedIn', Icons.connect_without_contact, (v) => widget.resumeData.linkedin = v, initial: widget.resumeData.linkedin, keyboardType: TextInputType.url, textCapitalization: TextCapitalization.none),
+        _buildField('GitHub', Icons.code, (v) => widget.resumeData.github = v, initial: widget.resumeData.github, keyboardType: TextInputType.url, textCapitalization: TextCapitalization.none),
       ],
     );
   }
-
-  // --- REUSABLE WIDGETS ---
 
   Widget _buildCardWrapper({required String title, required IconData icon, required List<Widget> children}) {
     return Container(
@@ -520,12 +535,29 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
     );
   }
 
-  Widget _buildField(String label, IconData icon, Function(String) onChanged, {int maxLines = 1, String initial = ''}) {
+  Widget _buildField(String label, IconData icon, Function(String) onChanged, {
+    int maxLines = 1,
+    String initial = '',
+    TextInputType keyboardType = TextInputType.name,
+    TextCapitalization textCapitalization = TextCapitalization.words,
+    TextInputAction textInputAction = TextInputAction.next,
+    bool isRequired = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         initialValue: initial,
         maxLines: maxLines,
+        keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
+        textInputAction: textInputAction,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (value) {
+          if (isRequired && (value == null || value.trim().isEmpty)) {
+            return 'Please enter your $label';
+          }
+          return null;
+        },
         onChanged: (v) {
           onChanged(v);
           widget.onDataChanged();
@@ -535,12 +567,29 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
     );
   }
 
-  Widget _buildSmallField(String label, Function(String) onChanged, {int maxLines = 1, String initial = ''}) {
+  Widget _buildSmallField(String label, Function(String) onChanged, {
+    int maxLines = 1,
+    String initial = '',
+    TextInputType keyboardType = TextInputType.name,
+    TextCapitalization textCapitalization = TextCapitalization.words,
+    TextInputAction textInputAction = TextInputAction.next,
+    bool isRequired = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
         initialValue: initial,
         maxLines: maxLines,
+        keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
+        textInputAction: textInputAction,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (value) {
+          if (isRequired && (value == null || value.trim().isEmpty)) {
+            return 'Required';
+          }
+          return null;
+        },
         onChanged: (v) {
           onChanged(v);
           widget.onDataChanged();
@@ -567,15 +616,62 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
 }
 
 // ===============================================
-// 3. PREVIEW TAB
+// 3. PREVIEW TAB (WITH LOCK FEATURE)
 // ===============================================
 class _PreviewTab extends StatelessWidget {
   final PdfControllerPinch pdfController;
   final VoidCallback handleSave;
-  const _PreviewTab({required this.pdfController, required this.handleSave});
+  final ResumeModel resumeData;
+  final TabController tabController;
+
+  const _PreviewTab({
+    required this.pdfController,
+    required this.handleSave,
+    required this.resumeData,
+    required this.tabController,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // ⬅️ ASAL JADOO: Check karega ke 4 zaroori fields bhari hain ya nahi
+    bool isReady = resumeData.fullName.trim().isNotEmpty &&
+        resumeData.jobTitle.trim().isNotEmpty &&
+        resumeData.email.trim().isNotEmpty &&
+        resumeData.phone.trim().isNotEmpty;
+
+    if (!isReady) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline, size: 80, color: Colors.blueGrey.shade300),
+            const SizedBox(height: 20),
+            Text('Preview Locked', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
+            const SizedBox(height: 10),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Please fill in your Full Name, Job Title, Email, and Phone number in the Edit tab to unlock your PDF Preview.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.blueGrey),
+              ),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey.shade900,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
+              onPressed: () => tabController.animateTo(0), // Wapas Edit tab pe bhejo
+              icon: const Icon(Icons.edit),
+              label: const Text('Go to Edit Details'),
+            )
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         Expanded(child: Container(color: Colors.grey.shade300, child: PdfViewPinch(controller: pdfController))),
