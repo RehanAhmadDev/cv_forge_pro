@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:printing/printing.dart';
 import '../data/resume_model.dart';
 
 class PdfGenerator {
@@ -16,8 +17,67 @@ class PdfGenerator {
       profileImage = pw.MemoryImage(bytes);
     }
 
-    // ⬅️ ASAL JADOO YAHAN HAI: Sara Dummy Data khatam kar diya gaya hai.
-    // Ab jo user form mein likhega, sirf aur sirf wahi PDF mein aayega!
+    pw.Font baseFont;
+    pw.Font boldFont;
+
+    // ⬅️ NAYA: 12 Fonts ki loading conditions add ho gayi hain
+    switch (inputData.fontStyle) {
+      case 'Montserrat':
+        baseFont = await PdfGoogleFonts.montserratRegular();
+        boldFont = await PdfGoogleFonts.montserratBold();
+        break;
+      case 'Poppins':
+        baseFont = await PdfGoogleFonts.poppinsRegular();
+        boldFont = await PdfGoogleFonts.poppinsBold();
+        break;
+      case 'Open Sans':
+        baseFont = await PdfGoogleFonts.openSansRegular();
+        boldFont = await PdfGoogleFonts.openSansBold();
+        break;
+      case 'Oswald':
+        baseFont = await PdfGoogleFonts.oswaldRegular();
+        boldFont = await PdfGoogleFonts.oswaldBold();
+        break;
+      case 'Lato':
+        baseFont = await PdfGoogleFonts.latoRegular();
+        boldFont = await PdfGoogleFonts.latoBold();
+        break;
+      case 'Raleway':
+        baseFont = await PdfGoogleFonts.ralewayRegular();
+        boldFont = await PdfGoogleFonts.ralewayBold();
+        break;
+      case 'Ubuntu':
+        baseFont = await PdfGoogleFonts.ubuntuRegular();
+        boldFont = await PdfGoogleFonts.ubuntuBold();
+        break;
+      case 'Merriweather':
+        baseFont = await PdfGoogleFonts.merriweatherRegular();
+        boldFont = await PdfGoogleFonts.merriweatherBold();
+        break;
+      case 'Playfair Display':
+        baseFont = await PdfGoogleFonts.playfairDisplayRegular();
+        boldFont = await PdfGoogleFonts.playfairDisplayBold();
+        break;
+      case 'Nunito':
+        baseFont = await PdfGoogleFonts.nunitoRegular();
+        boldFont = await PdfGoogleFonts.nunitoBold();
+        break;
+      case 'Lora':
+        baseFont = await PdfGoogleFonts.loraRegular();
+        boldFont = await PdfGoogleFonts.loraBold();
+        break;
+      case 'Roboto':
+      default:
+        baseFont = await PdfGoogleFonts.robotoRegular();
+        boldFont = await PdfGoogleFonts.robotoBold();
+        break;
+    }
+
+    final myTheme = pw.ThemeData.withFont(
+      base: baseFont,
+      bold: boldFont,
+    );
+
     final data = ResumeModel(
       fullName: inputData.fullName,
       jobTitle: inputData.jobTitle,
@@ -44,8 +104,11 @@ class PdfGenerator {
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
+        pageTheme: pw.PageTheme(
+          theme: myTheme,
+          margin: pw.EdgeInsets.zero,
+          pageFormat: PdfPageFormat.a4,
+        ),
         build: (pw.Context context) {
           pw.Widget design;
           switch (data.selectedTemplate) {

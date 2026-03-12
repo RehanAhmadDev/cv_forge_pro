@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../data/resume_model.dart';
 import '../domain/pdf_generator.dart';
 
@@ -23,7 +24,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
   final ImagePicker _picker = ImagePicker();
 
   bool _isLoading = true;
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -64,7 +64,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
       if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
 
       _pdfController = PdfControllerPinch(
-        document: PdfDocument.openData(PdfGenerator.generateResume(_resumeData)),
+        document: PdfDocument.openData(await PdfGenerator.generateResume(_resumeData)),
       );
 
       setState(() {
@@ -183,7 +183,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
                 _autoSave();
               }
           ),
-          // ⬅️ NAYA: Yahan hum ne resumeData aur tabController pass kar diye hain lock check ke liye
           _PreviewTab(
             pdfController: _pdfController,
             handleSave: _handleSave,
@@ -221,6 +220,13 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
     {'name': 'Teal', 'hex': '#004D40'},
   ];
 
+  // ⬅️ NAYA: 12 Premium Fonts ki list shamil kar di gayi hai
+  final List<String> fontStyles = [
+    'Roboto', 'Montserrat', 'Poppins', 'Open Sans', 'Oswald',
+    'Lato', 'Raleway', 'Ubuntu', 'Merriweather', 'Playfair Display',
+    'Nunito', 'Lora'
+  ];
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -253,6 +259,42 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
                   ),
                   child: isSelected ? const Icon(Icons.check, color: Colors.white) : null,
                 ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 30),
+          const Divider(),
+          const SizedBox(height: 20),
+
+          const Text('Typography (Font Style)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: fontStyles.map((font) {
+              final isSelected = widget.resumeData.fontStyle == font;
+              return ChoiceChip(
+                label: Text(
+                  font,
+                  style: GoogleFonts.getFont(
+                    font,
+                    textStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.blueGrey.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: Colors.blueGrey.shade800,
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: isSelected ? Colors.blueGrey.shade800 : Colors.grey.shade300)),
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() => widget.resumeData.fontStyle = font);
+                    widget.onUpdate();
+                  }
+                },
               );
             }).toList(),
           ),
@@ -633,7 +675,6 @@ class _PreviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ⬅️ ASAL JADOO: Check karega ke 4 zaroori fields bhari hain ya nahi
     bool isReady = resumeData.fullName.trim().isNotEmpty &&
         resumeData.jobTitle.trim().isNotEmpty &&
         resumeData.email.trim().isNotEmpty &&
@@ -663,7 +704,7 @@ class _PreviewTab extends StatelessWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
-              onPressed: () => tabController.animateTo(0), // Wapas Edit tab pe bhejo
+              onPressed: () => tabController.animateTo(0),
               icon: const Icon(Icons.edit),
               label: const Text('Go to Edit Details'),
             )
