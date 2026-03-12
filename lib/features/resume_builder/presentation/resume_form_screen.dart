@@ -28,10 +28,11 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
     if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
 
-    _tabController = TabController(length: 2, vsync: this);
+    // ⬅️ Ab Tabs 3 ho gaye hain (Edit, Design, Preview)
+    _tabController = TabController(length: 3, vsync: this);
 
     _tabController.addListener(() {
-      if (_tabController.index == 1) {
+      if (_tabController.index == 2) { // 2 matlab Preview Tab
         FocusScope.of(context).unfocus();
         _updatePreview();
       }
@@ -91,7 +92,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text('${widget.selectedTemplate} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+        title: Text('${widget.selectedTemplate} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.blueGrey.shade900,
         elevation: 0.5,
@@ -101,16 +102,20 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
           indicatorColor: Colors.blueGrey.shade900,
           labelColor: Colors.blueGrey.shade900,
           unselectedLabelColor: Colors.grey.shade500,
+          isScrollable: true, // Tabs lambe ho gaye hain
           tabs: const [
             Tab(icon: Icon(Icons.edit_document), text: "Edit Details"),
+            Tab(icon: Icon(Icons.palette), text: "Design"), // ⬅️ Naya Tab
             Tab(icon: Icon(Icons.remove_red_eye), text: "Live Preview")
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(), // Swipe to change band kiya taake sliders aaram se chalein
         children: [
           _EditDetailsTab(resumeData: _resumeData, pickImage: _pickImage),
+          _DesignTab(resumeData: _resumeData, onUpdate: () => setState((){})), // ⬅️ Naya Customization Panel
           _PreviewTab(pdfController: _pdfController, handleSave: _handleSave),
         ],
       ),
@@ -118,6 +123,127 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
   }
 }
 
+// ===============================================
+// 🌟 1. DESIGN / CUSTOMIZATION TAB (NEW)
+// ===============================================
+class _DesignTab extends StatefulWidget {
+  final ResumeModel resumeData;
+  final VoidCallback onUpdate;
+  const _DesignTab({required this.resumeData, required this.onUpdate});
+
+  @override
+  State<_DesignTab> createState() => _DesignTabState();
+}
+
+class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  final List<Map<String, String>> themeColors = [
+    {'name': 'Deep Blue', 'hex': '#1A237E'},
+    {'name': 'Charcoal', 'hex': '#212121'},
+    {'name': 'Crimson', 'hex': '#B71C1C'},
+    {'name': 'Forest', 'hex': '#1B5E20'},
+    {'name': 'Orange', 'hex': '#E65100'},
+    {'name': 'Teal', 'hex': '#004D40'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- Color Selection ---
+          const Text('Theme Color', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: themeColors.map((c) {
+              final colorValue = Color(int.parse(c['hex']!.replaceFirst('#', '0xFF')));
+              final isSelected = widget.resumeData.themeColor == c['hex'];
+              return GestureDetector(
+                onTap: () {
+                  setState(() => widget.resumeData.themeColor = c['hex']!);
+                  widget.onUpdate();
+                },
+                child: Container(
+                  width: 50, height: 50,
+                  decoration: BoxDecoration(
+                    color: colorValue,
+                    shape: BoxShape.circle,
+                    border: isSelected ? Border.all(color: Colors.blueAccent, width: 4) : Border.all(color: Colors.white, width: 2),
+                    boxShadow: [if (isSelected) const BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                  ),
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white) : null,
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 30),
+          const Divider(),
+          const SizedBox(height: 20),
+
+          // --- Margin Slider ---
+          const Text('Page Margins', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          Slider(
+            value: widget.resumeData.pageMargin,
+            min: 10.0, max: 60.0, divisions: 10,
+            activeColor: Colors.blueGrey.shade800,
+            label: widget.resumeData.pageMargin.toStringAsFixed(0),
+            onChanged: (v) {
+              setState(() => widget.resumeData.pageMargin = v);
+              widget.onUpdate();
+            },
+          ),
+          const Center(child: Text('Adjust spacing around the edges of your PDF', style: TextStyle(fontSize: 12, color: Colors.grey))),
+
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 20),
+
+          // --- Heading Size Slider ---
+          const Text('Heading Text Size', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          Slider(
+            value: widget.resumeData.headingTextSize,
+            min: 14.0, max: 30.0, divisions: 16,
+            activeColor: Colors.blueGrey.shade800,
+            label: widget.resumeData.headingTextSize.toStringAsFixed(0),
+            onChanged: (v) {
+              setState(() => widget.resumeData.headingTextSize = v);
+              widget.onUpdate();
+            },
+          ),
+
+          const SizedBox(height: 20),
+
+          // --- Body Size Slider ---
+          const Text('Body Text Size', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          Slider(
+            value: widget.resumeData.bodyTextSize,
+            min: 8.0, max: 16.0, divisions: 8,
+            activeColor: Colors.blueGrey.shade600,
+            label: widget.resumeData.bodyTextSize.toStringAsFixed(0),
+            onChanged: (v) {
+              setState(() => widget.resumeData.bodyTextSize = v);
+              widget.onUpdate();
+            },
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+}
+
+// ===============================================
+// 2. EDIT DETAILS TAB (OLD - UNCHANGED)
+// ===============================================
 class _EditDetailsTab extends StatefulWidget {
   final ResumeModel resumeData;
   final VoidCallback pickImage;
@@ -290,7 +416,7 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
     );
   }
 
-  // --- REUSABLE WIDGETS (Corrected Types) ---
+  // --- REUSABLE WIDGETS ---
 
   Widget _buildCardWrapper({required String title, required IconData icon, required List<Widget> children}) {
     return Container(
@@ -348,6 +474,9 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
   }
 }
 
+// ===============================================
+// 3. PREVIEW TAB
+// ===============================================
 class _PreviewTab extends StatelessWidget {
   final PdfControllerPinch pdfController;
   final VoidCallback handleSave;

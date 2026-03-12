@@ -1,8 +1,7 @@
-// ⬅️ Nayi Classes Dynamic Lists Ke Liye
 class ExperienceItem {
   String company;
   String role;
-  String duration; // e.g., "Jan 2024 - Present"
+  String duration;
   String description;
 
   ExperienceItem({this.company = '', this.role = '', this.duration = '', this.description = ''});
@@ -25,26 +24,31 @@ class ProjectItem {
   ProjectItem({this.title = '', this.description = '', this.link = ''});
 }
 
-// ⬅️ Main Model Update Ho Gaya
 class ResumeModel {
   String fullName;
   String email;
   String phone;
-  String address; // Naya: Location/Address
+  String address;
   String jobTitle;
   String summary;
   String skills;
-  String languages; // Naya: Zabanain
+  String languages;
   String selectedTemplate;
 
   String? imagePath;
   String github;
   String linkedin;
 
-  // --- Naye Dynamic Lists ---
+  // --- 🌟 NAYE CUSTOMIZATION FEATURES 🌟 ---
+  String themeColor;       // Hex code format e.g., '#1A237E'
+  double pageMargin;       // Page ke kinaron ka fasla
+  double headingTextSize;  // Headings ka size
+  double bodyTextSize;     // Normal text ka size
+  String fontStyle;        // Font ka style (e.g., 'Roboto', 'OpenSans')
+
   List<ExperienceItem> experienceList;
   List<EducationItem> educationList;
-  List<ProjectItem> projectList; // Naya: Portfolio/Projects
+  List<ProjectItem> projectList;
 
   ResumeModel({
     this.fullName = '',
@@ -59,11 +63,18 @@ class ResumeModel {
     this.imagePath,
     this.github = '',
     this.linkedin = '',
+
+    // Default Styling Values
+    this.themeColor = '#1A237E',
+    this.pageMargin = 40.0,
+    this.headingTextSize = 18.0,
+    this.bodyTextSize = 11.0,
+    this.fontStyle = 'Roboto',
+
     List<ExperienceItem>? experienceList,
     List<EducationItem>? educationList,
     List<ProjectItem>? projectList,
   }) :
-  // Agar list null ho to khali list assign kar do
         experienceList = experienceList ?? [],
         educationList = educationList ?? [],
         projectList = projectList ?? [];
