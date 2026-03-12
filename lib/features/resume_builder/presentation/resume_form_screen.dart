@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/resume_model.dart';
 import '../domain/pdf_generator.dart';
 
@@ -15,32 +17,26 @@ class ResumeFormScreen extends StatefulWidget {
 }
 
 class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerProviderStateMixin {
-  final ResumeModel _resumeData = ResumeModel();
+  ResumeModel _resumeData = ResumeModel();
   late PdfControllerPinch _pdfController;
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
 
+  bool _isLoading = true; // ⬅️ NAYA: Loading state lagaya gaya hai
+
   @override
   void initState() {
     super.initState();
-    _resumeData.selectedTemplate = widget.selectedTemplate;
 
-    if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
-    if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
-
-    // ⬅️ Ab Tabs 3 ho gaye hain (Edit, Design, Preview)
     _tabController = TabController(length: 3, vsync: this);
-
     _tabController.addListener(() {
-      if (_tabController.index == 2) { // 2 matlab Preview Tab
+      if (_tabController.index == 2) {
         FocusScope.of(context).unfocus();
         _updatePreview();
       }
     });
 
-    _pdfController = PdfControllerPinch(
-      document: PdfDocument.openData(PdfGenerator.generateResume(_resumeData)),
-    );
+    _loadSavedData(); // ⬅️ Pehle data load hoga, phir PDF aur Form banenge
   }
 
   @override
@@ -50,12 +46,57 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     super.dispose();
   }
 
+  // ==========================================
+  // 💾 DATABASE LOGIC (LOAD & SAVE)
+  // ==========================================
+  Future<void> _loadSavedData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? savedJson = prefs.getString('cv_forge_data');
+
+      if (savedJson != null) {
+        final Map<String, dynamic> decodedData = json.decode(savedJson);
+        _resumeData = ResumeModel.fromJson(decodedData);
+      }
+
+      // Hamesha wo template apply karein jo user ne bahar se select kiya hai
+      _resumeData.selectedTemplate = widget.selectedTemplate;
+
+      if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
+      if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
+
+      // ⬅️ Data aane ke baad PDF controller chalana hai taake blank na ho
+      _pdfController = PdfControllerPinch(
+        document: PdfDocument.openData(PdfGenerator.generateResume(_resumeData)),
+      );
+
+      setState(() {
+        _isLoading = false; // ⬅️ Loading khatam, ab asli form draw hoga
+      });
+    } catch (e) {
+      debugPrint("Data load error: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _autoSave() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String encodedData = json.encode(_resumeData.toJson());
+      await prefs.setString('cv_forge_data', encodedData);
+    } catch (e) {
+      debugPrint("Auto-save error: $e");
+    }
+  }
+  // ==========================================
+
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
         _resumeData.imagePath = image.path;
       });
+      _autoSave();
       _updatePreview();
     }
   }
@@ -89,6 +130,14 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    // ⬅️ NAYA: Agar data load ho raha hai, toh form mat dikhao
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F7FA),
+        body: Center(child: CircularProgressIndicator(color: Colors.blueGrey)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -102,20 +151,30 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
           indicatorColor: Colors.blueGrey.shade900,
           labelColor: Colors.blueGrey.shade900,
           unselectedLabelColor: Colors.grey.shade500,
-          isScrollable: true, // Tabs lambe ho gaye hain
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.edit_document), text: "Edit Details"),
-            Tab(icon: Icon(Icons.palette), text: "Design"), // ⬅️ Naya Tab
+            Tab(icon: Icon(Icons.palette), text: "Design"),
             Tab(icon: Icon(Icons.remove_red_eye), text: "Live Preview")
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(), // Swipe to change band kiya taake sliders aaram se chalein
+        physics: const NeverScrollableScrollPhysics(),
         children: [
-          _EditDetailsTab(resumeData: _resumeData, pickImage: _pickImage),
-          _DesignTab(resumeData: _resumeData, onUpdate: () => setState((){})), // ⬅️ Naya Customization Panel
+          _EditDetailsTab(
+            resumeData: _resumeData,
+            pickImage: _pickImage,
+            onDataChanged: _autoSave,
+          ),
+          _DesignTab(
+              resumeData: _resumeData,
+              onUpdate: () {
+                setState((){});
+                _autoSave();
+              }
+          ),
           _PreviewTab(pdfController: _pdfController, handleSave: _handleSave),
         ],
       ),
@@ -124,7 +183,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
 }
 
 // ===============================================
-// 🌟 1. DESIGN / CUSTOMIZATION TAB (NEW)
+// 1. DESIGN / CUSTOMIZATION TAB
 // ===============================================
 class _DesignTab extends StatefulWidget {
   final ResumeModel resumeData;
@@ -157,7 +216,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Color Selection ---
           const Text('Theme Color', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           const SizedBox(height: 10),
           Wrap(
@@ -189,7 +247,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
           const Divider(),
           const SizedBox(height: 20),
 
-          // --- Margin Slider ---
           const Text('Page Margins', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           Slider(
             value: widget.resumeData.pageMargin,
@@ -207,7 +264,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
           const Divider(),
           const SizedBox(height: 20),
 
-          // --- Heading Size Slider ---
           const Text('Heading Text Size', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           Slider(
             value: widget.resumeData.headingTextSize,
@@ -222,7 +278,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
 
           const SizedBox(height: 20),
 
-          // --- Body Size Slider ---
           const Text('Body Text Size', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           Slider(
             value: widget.resumeData.bodyTextSize,
@@ -242,12 +297,13 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
 }
 
 // ===============================================
-// 2. EDIT DETAILS TAB (OLD - UNCHANGED)
+// 2. EDIT DETAILS TAB
 // ===============================================
 class _EditDetailsTab extends StatefulWidget {
   final ResumeModel resumeData;
   final VoidCallback pickImage;
-  const _EditDetailsTab({required this.resumeData, required this.pickImage});
+  final VoidCallback onDataChanged;
+  const _EditDetailsTab({required this.resumeData, required this.pickImage, required this.onDataChanged});
 
   @override
   State<_EditDetailsTab> createState() => _EditDetailsTabState();
@@ -344,7 +400,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
           ExperienceItem exp = entry.value;
           return _buildDynamicItem(
             title: 'Job ${i + 1}',
-            onDelete: () => setState(() => widget.resumeData.experienceList.removeAt(i)),
+            onDelete: () {
+              setState(() => widget.resumeData.experienceList.removeAt(i));
+              widget.onDataChanged();
+            },
             fields: [
               _buildSmallField('Company', (v) => exp.company = v, initial: exp.company),
               _buildSmallField('Role', (v) => exp.role = v, initial: exp.role),
@@ -353,7 +412,14 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
             ],
           );
         }),
-        TextButton.icon(onPressed: () => setState(() => widget.resumeData.experienceList.add(ExperienceItem())), icon: const Icon(Icons.add), label: const Text('Add Job')),
+        TextButton.icon(
+            onPressed: () {
+              setState(() => widget.resumeData.experienceList.add(ExperienceItem()));
+              widget.onDataChanged();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Job')
+        ),
       ],
     );
   }
@@ -368,7 +434,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
           EducationItem edu = entry.value;
           return _buildDynamicItem(
             title: 'Degree ${i + 1}',
-            onDelete: () => setState(() => widget.resumeData.educationList.removeAt(i)),
+            onDelete: () {
+              setState(() => widget.resumeData.educationList.removeAt(i));
+              widget.onDataChanged();
+            },
             fields: [
               _buildSmallField('Institution', (v) => edu.institution = v, initial: edu.institution),
               _buildSmallField('Degree', (v) => edu.degree = v, initial: edu.degree),
@@ -377,7 +446,14 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
             ],
           );
         }),
-        TextButton.icon(onPressed: () => setState(() => widget.resumeData.educationList.add(EducationItem())), icon: const Icon(Icons.add), label: const Text('Add Education')),
+        TextButton.icon(
+            onPressed: () {
+              setState(() => widget.resumeData.educationList.add(EducationItem()));
+              widget.onDataChanged();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Education')
+        ),
       ],
     );
   }
@@ -392,7 +468,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
           ProjectItem proj = entry.value;
           return _buildDynamicItem(
             title: 'Project ${i + 1}',
-            onDelete: () => setState(() => widget.resumeData.projectList.removeAt(i)),
+            onDelete: () {
+              setState(() => widget.resumeData.projectList.removeAt(i));
+              widget.onDataChanged();
+            },
             fields: [
               _buildSmallField('Title', (v) => proj.title = v, initial: proj.title),
               _buildSmallField('Link', (v) => proj.link = v, initial: proj.link),
@@ -400,7 +479,14 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
             ],
           );
         }),
-        TextButton.icon(onPressed: () => setState(() => widget.resumeData.projectList.add(ProjectItem())), icon: const Icon(Icons.add), label: const Text('Add Project')),
+        TextButton.icon(
+            onPressed: () {
+              setState(() => widget.resumeData.projectList.add(ProjectItem()));
+              widget.onDataChanged();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Project')
+        ),
       ],
     );
   }
@@ -440,7 +526,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       child: TextFormField(
         initialValue: initial,
         maxLines: maxLines,
-        onChanged: onChanged,
+        onChanged: (v) {
+          onChanged(v);
+          widget.onDataChanged();
+        },
         decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
       ),
     );
@@ -452,7 +541,10 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       child: TextFormField(
         initialValue: initial,
         maxLines: maxLines,
-        onChanged: onChanged,
+        onChanged: (v) {
+          onChanged(v);
+          widget.onDataChanged();
+        },
         style: const TextStyle(fontSize: 13),
         decoration: InputDecoration(labelText: label, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
       ),
