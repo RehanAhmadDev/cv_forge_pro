@@ -9,7 +9,6 @@ import '../data/resume_model.dart';
 import '../domain/pdf_generator.dart';
 
 class ResumeFormScreen extends StatefulWidget {
-  // ⬅️ ASAL FIX: Yahan ab hum poora ResumeModel catch kar rahe hain
   final ResumeModel resumeData;
 
   const ResumeFormScreen({super.key, required this.resumeData});
@@ -51,7 +50,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
 
   Future<void> _loadSavedData() async {
     try {
-      // ⬅️ ASAL FIX: Nayi CV ya Purani CV ka data Model se uthaya
       _resumeData = widget.resumeData;
 
       if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
@@ -70,7 +68,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     }
   }
 
-  // ⬅️ ASAL FIX: Auto Save ab poori CV List (Dashboard) ko update karega
   Future<void> _autoSave() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -82,16 +79,14 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
         allProfiles = decodedList.map((item) => ResumeModel.fromJson(item)).toList();
       }
 
-      // Check karein ke ye CV (is ID ki) list mein kahan hai?
       int index = allProfiles.indexWhere((p) => p.id == _resumeData.id);
 
       if (index != -1) {
-        allProfiles[index] = _resumeData; // Purani CV ko Update karo
+        allProfiles[index] = _resumeData;
       } else {
-        allProfiles.add(_resumeData); // Nayi CV ko Add karo
+        allProfiles.add(_resumeData);
       }
 
-      // List ko wapas JSON mein convert karke save kar do
       final String encodedList = json.encode(allProfiles.map((e) => e.toJson()).toList());
       await prefs.setString('cv_profiles_list', encodedList);
     } catch (e) {
@@ -161,7 +156,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        // Yahan Editor ke uper us CV ka naam aayega
         title: Text('${_resumeData.profileName} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.blueGrey.shade900,
@@ -398,11 +392,11 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
             const SizedBox(height: 20),
             _buildProfessionalCard(),
             const SizedBox(height: 20),
-            _buildExperienceCard(),
+            _buildExperienceCard(), // ⬅️ DRAG & DROP YAHAN LAGA HAI
             const SizedBox(height: 20),
-            _buildEducationCard(),
+            _buildEducationCard(),  // ⬅️ DRAG & DROP YAHAN LAGA HAI
             const SizedBox(height: 20),
-            _buildProjectsCard(),
+            _buildProjectsCard(),   // ⬅️ DRAG & DROP YAHAN LAGA HAI
             const SizedBox(height: 20),
             _buildSocialCard(),
             const SizedBox(height: 30),
@@ -467,23 +461,38 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Work Experience',
       icon: Icons.business_center,
       children: [
-        ...widget.resumeData.experienceList.asMap().entries.map((entry) {
-          int i = entry.key;
-          ExperienceItem exp = entry.value;
-          return _buildDynamicItem(
-            title: 'Job ${i + 1}',
-            onDelete: () {
-              setState(() => widget.resumeData.experienceList.removeAt(i));
-              widget.onDataChanged();
-            },
-            fields: [
-              _buildSmallField('Company', (v) => exp.company = v, initial: exp.company),
-              _buildSmallField('Role', (v) => exp.role = v, initial: exp.role),
-              _buildSmallField('Duration', (v) => exp.duration = v, initial: exp.duration),
-              _buildSmallField('Description', (v) => exp.description = v, maxLines: 2, initial: exp.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
-            ],
-          );
-        }),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(), // Scroll single child scroll view karega
+          itemCount: widget.resumeData.experienceList.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final item = widget.resumeData.experienceList.removeAt(oldIndex);
+              widget.resumeData.experienceList.insert(newIndex, item);
+            });
+            widget.onDataChanged();
+          },
+          itemBuilder: (context, i) {
+            ExperienceItem exp = widget.resumeData.experienceList[i];
+            return _buildDynamicItem(
+              key: ObjectKey(exp), // Drag & drop ke liye key zaroori hai
+              title: 'Job ${i + 1}',
+              onDelete: () {
+                setState(() => widget.resumeData.experienceList.removeAt(i));
+                widget.onDataChanged();
+              },
+              fields: [
+                _buildSmallField('Company', (v) => exp.company = v, initial: exp.company),
+                _buildSmallField('Role', (v) => exp.role = v, initial: exp.role),
+                _buildSmallField('Duration', (v) => exp.duration = v, initial: exp.duration),
+                _buildSmallField('Description', (v) => exp.description = v, maxLines: 2, initial: exp.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
+              ],
+            );
+          },
+        ),
         TextButton.icon(
             onPressed: () {
               setState(() => widget.resumeData.experienceList.add(ExperienceItem()));
@@ -501,23 +510,36 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Education',
       icon: Icons.school_outlined,
       children: [
-        ...widget.resumeData.educationList.asMap().entries.map((entry) {
-          int i = entry.key;
-          EducationItem edu = entry.value;
-          return _buildDynamicItem(
-            title: 'Degree ${i + 1}',
-            onDelete: () {
-              setState(() => widget.resumeData.educationList.removeAt(i));
-              widget.onDataChanged();
-            },
-            fields: [
-              _buildSmallField('Institution', (v) => edu.institution = v, initial: edu.institution),
-              _buildSmallField('Degree', (v) => edu.degree = v, initial: edu.degree),
-              _buildSmallField('Year', (v) => edu.year = v, initial: edu.year),
-              _buildSmallField('Grade', (v) => edu.grade = v, initial: edu.grade),
-            ],
-          );
-        }),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: widget.resumeData.educationList.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (oldIndex < newIndex) newIndex -= 1;
+              final item = widget.resumeData.educationList.removeAt(oldIndex);
+              widget.resumeData.educationList.insert(newIndex, item);
+            });
+            widget.onDataChanged();
+          },
+          itemBuilder: (context, i) {
+            EducationItem edu = widget.resumeData.educationList[i];
+            return _buildDynamicItem(
+              key: ObjectKey(edu),
+              title: 'Degree ${i + 1}',
+              onDelete: () {
+                setState(() => widget.resumeData.educationList.removeAt(i));
+                widget.onDataChanged();
+              },
+              fields: [
+                _buildSmallField('Institution', (v) => edu.institution = v, initial: edu.institution),
+                _buildSmallField('Degree', (v) => edu.degree = v, initial: edu.degree),
+                _buildSmallField('Year', (v) => edu.year = v, initial: edu.year),
+                _buildSmallField('Grade', (v) => edu.grade = v, initial: edu.grade),
+              ],
+            );
+          },
+        ),
         TextButton.icon(
             onPressed: () {
               setState(() => widget.resumeData.educationList.add(EducationItem()));
@@ -535,22 +557,35 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
       title: 'Projects',
       icon: Icons.web_asset,
       children: [
-        ...widget.resumeData.projectList.asMap().entries.map((entry) {
-          int i = entry.key;
-          ProjectItem proj = entry.value;
-          return _buildDynamicItem(
-            title: 'Project ${i + 1}',
-            onDelete: () {
-              setState(() => widget.resumeData.projectList.removeAt(i));
-              widget.onDataChanged();
-            },
-            fields: [
-              _buildSmallField('Title', (v) => proj.title = v, initial: proj.title),
-              _buildSmallField('Link', (v) => proj.link = v, initial: proj.link, keyboardType: TextInputType.url, textCapitalization: TextCapitalization.none),
-              _buildSmallField('Description', (v) => proj.description = v, maxLines: 2, initial: proj.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
-            ],
-          );
-        }),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: widget.resumeData.projectList.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (oldIndex < newIndex) newIndex -= 1;
+              final item = widget.resumeData.projectList.removeAt(oldIndex);
+              widget.resumeData.projectList.insert(newIndex, item);
+            });
+            widget.onDataChanged();
+          },
+          itemBuilder: (context, i) {
+            ProjectItem proj = widget.resumeData.projectList[i];
+            return _buildDynamicItem(
+              key: ObjectKey(proj),
+              title: 'Project ${i + 1}',
+              onDelete: () {
+                setState(() => widget.resumeData.projectList.removeAt(i));
+                widget.onDataChanged();
+              },
+              fields: [
+                _buildSmallField('Title', (v) => proj.title = v, initial: proj.title),
+                _buildSmallField('Link', (v) => proj.link = v, initial: proj.link, keyboardType: TextInputType.url, textCapitalization: TextCapitalization.none),
+                _buildSmallField('Description', (v) => proj.description = v, maxLines: 2, initial: proj.description, textInputAction: TextInputAction.newline, textCapitalization: TextCapitalization.sentences),
+              ],
+            );
+          },
+        ),
         TextButton.icon(
             onPressed: () {
               setState(() => widget.resumeData.projectList.add(ProjectItem()));
@@ -655,14 +690,28 @@ class _EditDetailsTabState extends State<_EditDetailsTab> with AutomaticKeepAliv
     );
   }
 
-  Widget _buildDynamicItem({required String title, required VoidCallback onDelete, required List<Widget> fields}) {
+  // ⬅️ NAYA UPDATE: Yahan Title ke sath Drag ka icon lagaya hai
+  Widget _buildDynamicItem({required Key key, required String title, required VoidCallback onDelete, required List<Widget> fields}) {
     return Container(
+      key: key, // ReorderableListView ko pehchanne ke liye zaroori hai
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.bold)), IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete)]),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.drag_indicator, color: Colors.blueGrey), // Drag Handle Icon
+                    const SizedBox(width: 8),
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete)
+              ]
+          ),
           ...fields,
         ],
       ),
