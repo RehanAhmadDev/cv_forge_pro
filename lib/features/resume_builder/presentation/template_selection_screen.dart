@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/resume_model.dart'; // ⬅️ Model Import Kiya
 import 'resume_form_screen.dart';
 
 class TemplateSelectionScreen extends StatelessWidget {
@@ -390,10 +391,17 @@ class TemplateSelectionScreen extends StatelessWidget {
                 final t = templates[index];
                 return GestureDetector(
                   onTap: () {
+                    // ⬅️ ASAL JADOO: Yahan hum ne naya ResumeModel banaya hai
+                    final newResume = ResumeModel(
+                      profileName: "${t['name']} Profile",
+                      selectedTemplate: t['name'],
+                    );
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ResumeFormScreen(selectedTemplate: t['name']),
+                        // ⬅️ Aur ye naya model Editor ko bhej diya
+                        builder: (context) => ResumeFormScreen(resumeData: newResume),
                       ),
                     );
                   },

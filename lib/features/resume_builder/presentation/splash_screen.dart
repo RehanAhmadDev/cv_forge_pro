@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'template_selection_screen.dart';
+import 'home_screen.dart'; // ⬅️ Yahan HomeScreen import karein
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,7 +16,8 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const TemplateSelectionScreen()),
+        // ⬅️ ASAL FIX: Yahan ab HomeScreen() aayega
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     });
   }

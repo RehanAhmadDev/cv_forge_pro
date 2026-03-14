@@ -67,6 +67,10 @@ class ProjectItem {
 }
 
 class ResumeModel {
+  // ⬅️ NAYE VARIABLES: Multiple CVs ki pehchan ke liye
+  String id;
+  String profileName;
+
   String fullName;
   String email;
   String phone;
@@ -92,6 +96,10 @@ class ResumeModel {
   List<ProjectItem> projectList;
 
   ResumeModel({
+    // Naye variables constructor mein (ID khud generate hogi agar na di jaye)
+    String? id,
+    this.profileName = 'My Resume',
+
     this.fullName = '',
     this.email = '',
     this.phone = '',
@@ -115,12 +123,15 @@ class ResumeModel {
     List<EducationItem>? educationList,
     List<ProjectItem>? projectList,
   }) :
+        this.id = id ?? DateTime.now().millisecondsSinceEpoch.toString(), // ⬅️ Unique ID ka logic
         experienceList = experienceList ?? [],
         educationList = educationList ?? [],
         projectList = projectList ?? [];
 
   // Poori CV ko database mein save karne ke liye
   Map<String, dynamic> toJson() => {
+    'id': id, // ⬅️ JSON mein save karein
+    'profileName': profileName, // ⬅️ JSON mein save karein
     'fullName': fullName,
     'email': email,
     'phone': phone,
@@ -145,6 +156,8 @@ class ResumeModel {
 
   // Database se CV wapas load karne ke liye
   factory ResumeModel.fromJson(Map<String, dynamic> json) => ResumeModel(
+    id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(), // ⬅️ JSON se read karein
+    profileName: json['profileName'] ?? 'My Resume', // ⬅️ JSON se read karein
     fullName: json['fullName'] ?? '',
     email: json['email'] ?? '',
     phone: json['phone'] ?? '',

@@ -9,16 +9,17 @@ import '../data/resume_model.dart';
 import '../domain/pdf_generator.dart';
 
 class ResumeFormScreen extends StatefulWidget {
-  final String selectedTemplate;
+  // ⬅️ ASAL FIX: Yahan ab hum poora ResumeModel catch kar rahe hain
+  final ResumeModel resumeData;
 
-  const ResumeFormScreen({super.key, required this.selectedTemplate});
+  const ResumeFormScreen({super.key, required this.resumeData});
 
   @override
   State<ResumeFormScreen> createState() => _ResumeFormScreenState();
 }
 
 class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerProviderStateMixin {
-  ResumeModel _resumeData = ResumeModel();
+  late ResumeModel _resumeData;
   late PdfControllerPinch _pdfController;
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
@@ -50,15 +51,8 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
 
   Future<void> _loadSavedData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? savedJson = prefs.getString('cv_forge_data');
-
-      if (savedJson != null) {
-        final Map<String, dynamic> decodedData = json.decode(savedJson);
-        _resumeData = ResumeModel.fromJson(decodedData);
-      }
-
-      _resumeData.selectedTemplate = widget.selectedTemplate;
+      // ⬅️ ASAL FIX: Nayi CV ya Purani CV ka data Model se uthaya
+      _resumeData = widget.resumeData;
 
       if (_resumeData.experienceList.isEmpty) _resumeData.experienceList.add(ExperienceItem());
       if (_resumeData.educationList.isEmpty) _resumeData.educationList.add(EducationItem());
@@ -76,11 +70,30 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     }
   }
 
+  // ⬅️ ASAL FIX: Auto Save ab poori CV List (Dashboard) ko update karega
   Future<void> _autoSave() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String encodedData = json.encode(_resumeData.toJson());
-      await prefs.setString('cv_forge_data', encodedData);
+      final String? profilesJson = prefs.getString('cv_profiles_list');
+      List<ResumeModel> allProfiles = [];
+
+      if (profilesJson != null) {
+        final List<dynamic> decodedList = json.decode(profilesJson);
+        allProfiles = decodedList.map((item) => ResumeModel.fromJson(item)).toList();
+      }
+
+      // Check karein ke ye CV (is ID ki) list mein kahan hai?
+      int index = allProfiles.indexWhere((p) => p.id == _resumeData.id);
+
+      if (index != -1) {
+        allProfiles[index] = _resumeData; // Purani CV ko Update karo
+      } else {
+        allProfiles.add(_resumeData); // Nayi CV ko Add karo
+      }
+
+      // List ko wapas JSON mein convert karke save kar do
+      final String encodedList = json.encode(allProfiles.map((e) => e.toJson()).toList());
+      await prefs.setString('cv_profiles_list', encodedList);
     } catch (e) {
       debugPrint("Auto-save error: $e");
     }
@@ -148,7 +161,8 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> with SingleTickerPr
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text('${widget.selectedTemplate} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        // Yahan Editor ke uper us CV ka naam aayega
+        title: Text('${_resumeData.profileName} Editor', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.blueGrey.shade900,
         elevation: 0.5,
@@ -220,7 +234,6 @@ class _DesignTabState extends State<_DesignTab> with AutomaticKeepAliveClientMix
     {'name': 'Teal', 'hex': '#004D40'},
   ];
 
-  // ⬅️ NAYA: 12 Premium Fonts ki list shamil kar di gayi hai
   final List<String> fontStyles = [
     'Roboto', 'Montserrat', 'Poppins', 'Open Sans', 'Oswald',
     'Lato', 'Raleway', 'Ubuntu', 'Merriweather', 'Playfair Display',
